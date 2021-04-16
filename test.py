@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 import csv
-from typing import List, Any
+from typing import List, Any, Tuple
 from nptyping import NDArray
 
 
@@ -10,7 +10,7 @@ ImageSeg = NDArray[(Any, Any, 3), int]
 
 
 
-def loadCsvFile(filename: str) -> List[Image, ImageSeg]:
+def loadCsvFile(filename: str) -> Tuple[List[Image], List[ImageSeg]]:
     data = []
     lbl = []
     with open(filename) as csvfile:
