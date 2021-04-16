@@ -5,12 +5,12 @@ from typing import List, Any
 from nptyping import NDArray
 
 
-Image = NDArray[(Any, Any, 3), Int]
-ImageSeg = NDArray[(Any, Any, 3), Int]
+Image = NDArray[(Any, Any, 3), int]
+ImageSeg = NDArray[(Any, Any, 3), int]
 
 
 
-def loadCsvFile(filename: Str) -> List[Image, ImageSeg]:
+def loadCsvFile(filename: str) -> List[Image, ImageSeg]:
     data = []
     lbl = []
     with open(filename) as csvfile:
