@@ -3,10 +3,10 @@ This module defines the class UNetX for working with a U-Net Xception-style mode
 """
 
 
-import tensorflow as _tf
-from tensorflow import _keras
+import tensorflow as __tf
+from tensorflow import keras as __keras
 
-class UNetX(_keras.Model):
+class UNetX(__keras.Model):
     """
     Class for creating and working with a U-Net Xception-style model
     Args:
