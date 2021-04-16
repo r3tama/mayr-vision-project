@@ -9,11 +9,23 @@ from typing import List, Any, Tuple,Dict
 from nptyping import NDArray
 from sklearn.model_selection import train_test_split
 
+# User-defined modules
+from models import UNetX
 
 DataSources = Dict[str,str]
-Image = NDArray[(Any, Any, 3), int]
-ImageSeg = NDArray[(Any, Any, 3), int]
+"""
+Dictionary form string to string with the keys "data" and "label"
+"""
 
+Image = NDArray[(Any, Any, 3), int]
+"""
+Color image with the data
+"""
+
+ImageSeg = NDArray[(Any, Any, 3), int]
+"""
+Color image with the mask
+"""
 
 def loadFromDataSources(d_list: List[DataSources]) -> Tuple[List[Image], List[ImageSeg]]:
     """
@@ -70,4 +82,5 @@ def loadCsvFile(filename: str) -> Tuple[List[Image], List[ImageSeg],List[DataSou
 
 
 if __name__ == "__main__":
-    data, lbl,test_dict = loadCsvFile('img.csv')
+    # data, lbl,test_dict = loadCsvFile('img.csv')
+    net: UNetX = UNetX()
