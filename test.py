@@ -11,6 +11,7 @@ from nptyping import NDArray
 from sklearn.model_selection import train_test_split
 from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping
 import tensorflow as tf
+from ctypes import *
 
 # User-defined modules
 from models import *
@@ -75,8 +76,8 @@ def loadCsvFile(filename: str) -> Tuple[List[Image], List[ImageSeg],List[DataSou
         raise TypeError("Name is not a string")
     with open(filename) as csvfile:
         data_storage = list(csv.DictReader(csvfile, delimiter=";"))
-        train_dict, test_dict = train_test_split(data_storage,test_size=0.3,train_size=0.7,random_state=69)
-        # train_dict, test_dict = train_test_split(data_storage,test_size=0.95,train_size=0.05,random_state=69)
+        # train_dict, test_dict = train_test_split(data_storage,test_size=0.3,train_size=0.7,random_state=69)
+        train_dict, test_dict = train_test_split(data_storage,test_size=0.95,train_size=0.05,random_state=69)
         data,lbl = loadFromDataSources(train_dict)
         return data,lbl,test_dict
 
@@ -310,7 +311,11 @@ if __name__ == "__main__":
     data = data / 255.0
     # Convert labels from 3 to 1 dimension
     lbl = np.array(lbl, dtype=np.int16)
-    lblBin = rgb2oneDimLabel(lbl)
+    # lblBin = rgb2oneDimLabel(lbl)
+
+    convertDimensions = CDLL("convertDimension.so")
+    lblBin = convertDimensions.rgb2oneDimLabel(lbl, lbl.shape[0], lbl.shape[1], lbl.shape[2])
+    print("lblBin type: {}, lbl shape: {}".format(type(lblBin), lblBin.shape))
 
     numClasses = 24
     nEpochs = 20
