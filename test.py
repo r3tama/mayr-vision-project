@@ -310,11 +310,12 @@ if __name__ == "__main__":
     data = np.array(data, dtype=np.float32)
     data = data / 255.0
     # Convert labels from 3 to 1 dimension
-    lbl = np.array(lbl, dtype=np.int16)
+    lbl = np.array(lbl, dtype=np.int32)
     # lblBin = rgb2oneDimLabel(lbl)
 
-    convertDimensions = CDLL("libconvertDimension.so")
-    lblBin = convertDimensions.rgb2oneDimLabel(lbl, lbl.shape[0], lbl.shape[1], lbl.shape[2])
+    # convertDimensions = cdll.LoadLibrary("libconvertDimension.so")
+    convertDimensions = np.ctypeslib.load_library("libconvertDimension.so",".")
+    lblBin = convertDimensions.rgb2oneDimLabel(c_void_p(lbl.ctypes.data), lbl.shape[0], lbl.shape[1], lbl.shape[2])
     print("lblBin type: {}, lbl shape: {}".format(type(lblBin), lblBin.shape))
 
     numClasses = 24
