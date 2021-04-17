@@ -320,5 +320,5 @@ if __name__ == "__main__":
     # plt.show()
     # data, lbl,test_dict = loadCsvFile('img.csv')
     net: UNetX = UNetX(img_size=(480,720,3),n_filters=[32,64,128,256,256,128,64,32],n_classes=24)
-    net.build(input_shape=(1,480,720,3))
+    # net.build(input_shape=(None,480,720,3))
     net.summary()
