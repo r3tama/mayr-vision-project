@@ -289,18 +289,20 @@ def rgb2oneDimLabel(img: ImageSegCollection) -> ImageSegBinaryCollection:
 
 
 if __name__ == "__main__":
-    data, lbl, test_dict = loadCsvFile('img.csv')
+    # data, lbl, test_dict = loadCsvFile('img.csv')
     # Normalize data
-    data = np.array(data, dtype=np.float32)
-    data = data / 255.0
+    # data = np.array(data, dtype=np.float32)
+    # data = data / 255.0
     
-    lbl = np.array(lbl, dtype=np.int16)
-    imgBin = rgb2oneDimLabel(lbl)
-    img = oneDim2rgbLabel(imgBin)
+    # lbl = np.array(lbl, dtype=np.int16)
+    # imgBin = rgb2oneDimLabel(lbl)
+    # img = oneDim2rgbLabel(imgBin)
     # plt.axis('off')
     # plt.imshow(cv2.cvtColor(lbl[1], cv2.COLOR_BGR2RGB))
     # plt.show()
     # plt.imshow(img.astype(np.uint8))
     # plt.show()
     # data, lbl,test_dict = loadCsvFile('img.csv')
-    net: UNetX = UNetX(img_size=(480,720,3),n_filters=[32,64,128,256,256,128,64,32])
+    net: UNetX = UNetX(img_size=(480,720,3),n_filters=[32,64,128,256,256,128,64,32],n_classes=24)
+    net.build(input_shape=(1,480,720,3))
+    net.summary()
