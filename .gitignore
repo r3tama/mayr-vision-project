@@ -1,2 +1,4 @@
 semantic_drone_dataset/*
 *__pycache__*
+*.o
+*.so

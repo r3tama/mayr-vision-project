@@ -313,7 +313,7 @@ if __name__ == "__main__":
     lbl = np.array(lbl, dtype=np.int16)
     # lblBin = rgb2oneDimLabel(lbl)
 
-    convertDimensions = CDLL("convertDimension.so")
+    convertDimensions = CDLL("libconvertDimension.so")
     lblBin = convertDimensions.rgb2oneDimLabel(lbl, lbl.shape[0], lbl.shape[1], lbl.shape[2])
     print("lblBin type: {}, lbl shape: {}".format(type(lblBin), lblBin.shape))
 
