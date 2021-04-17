@@ -303,6 +303,11 @@ def rgb2oneDimLabel(img: ImageSegCollection) -> ImageSegBinaryCollection:
 if __name__ == "__main__":
      
     # Set where the channels are specified
+    config = tf.compat.v1.ConfigProto()
+    config.gpu_options.per_process_gpu_memory_fraction = 0.75
+    config.gpu_options.allow_growth = True
+    session = tf.compat.v1.InteractiveSession(config = config)
+
     tf.keras.backend.set_image_data_format("channels_last")
      
     data, lbl, test_dict = loadCsvFile('img.csv')
@@ -311,6 +316,11 @@ if __name__ == "__main__":
     data = data / 255.0
     # Convert labels from 3 to 1 dimension
     lbl = np.array(lbl, dtype=np.int32)
+    lblBin = rgb2oneDimLabel(lbl)
+
+    # convertDimensions = CDLL("libconvertDimension.so")
+    # lblBin = convertDimensions.rgb2oneDimLabel(lbl, lbl.shape[0], lbl.shape[1], lbl.shape[2])
+    # print("lblBin type: {}, lbl shape: {}".format(type(lblBin), lblBin.shape))
     # lblBin = rgb2oneDimLabel(lbl)
 
     print(lbl.shape)
@@ -340,7 +350,7 @@ if __name__ == "__main__":
     # plt.imshow(img.astype(np.uint8))
     # plt.show()
     # data, lbl,test_dict = loadCsvFile('img.csv')
-    net: UNetX = UNetX(img_size=(480,720,3),n_filters=[32,64,128,256,256,128,64,32],n_classes=24)
+    net: UNetX = UNetX(img_size=(720,480,3),n_filters=[32,64,128,256,256,128,64,32],n_classes=24)
     net.summary()
 
     net.compile(loss="sparse_categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
