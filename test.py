@@ -12,7 +12,7 @@ from sklearn.model_selection import train_test_split
 from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping
 
 # User-defined modules
-from models import UNetX
+from models import *
 
 # Definition of types for typing
 DataSources = Dict[str,str]
@@ -29,8 +29,9 @@ def loadFromDataSources(d_list: List[DataSources]) -> Tuple[List[Image], List[Im
     """
     Function to load the original images and ground truth images from the paths
     given in the DataSources
-    Input:
-        List of DataSources
+    Args:
+        d_list: List of DataSources
+
     Returns:
         A tuple with a list of original images and a list of ground truth images
     """
@@ -63,8 +64,9 @@ def loadFromDataSources(d_list: List[DataSources]) -> Tuple[List[Image], List[Im
 def loadCsvFile(filename: str) -> Tuple[List[Image], List[ImageSeg],List[DataSources]]:
     """
         Function to load original images and ground truth images from .csv file
-        Input:
-            .csv file name
+        Args:
+            filename: .csv file name
+
         Returns:
             a tuple with a list of original images  and a list of ground truth images
     """
@@ -317,3 +319,4 @@ if __name__ == "__main__":
     # plt.imshow(img.astype(np.uint8))
     # plt.show()
     # data, lbl,test_dict = loadCsvFile('img.csv')
+    net: UNetX = UNetX(img_size=(480,720,3),n_filters=[32,64,128,256,256,128,64,32])
