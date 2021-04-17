@@ -322,6 +322,6 @@ if __name__ == "__main__":
     # data, lbl,test_dict = loadCsvFile('img.csv')
     # net: UNetX = UNetX(img_size=(480,720,3),n_filters=[32,64,128,256,256,128,64,32],n_classes=24)
     # net.build(input_shape=(1,480,720,3))
-    net = UNetXception(32)
+    net = UNetXception(nFilters=[32, 64, 128, 256, 256, 128, 64, 32], nClasses=24)
     net.build((1,480,730,3))
     net.summary()
