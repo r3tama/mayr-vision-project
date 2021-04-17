@@ -10,9 +10,20 @@ from typing import List, Any, Tuple,Dict
 from nptyping import NDArray
 from sklearn.model_selection import train_test_split
 
+<<<<<<< HEAD
 # Definition of types for typing
+=======
+# User-defined modules
+from models import UNetX
+
+>>>>>>> 19fe40c08d2dbe5e3bd04b5a64a9ed09630d94e6
 DataSources = Dict[str,str]
+"""
+Dictionary form string to string with the keys "data" and "label"
+"""
+
 Image = NDArray[(Any, Any, 3), int]
+<<<<<<< HEAD
 ImageSeg = NDArray[(Any, Any, 3), int]
 ImageSegBinary = NDArray[(Any, Any, 1), int]
 ImageSegCollection = NDArray[(Any), ImageSeg]
@@ -20,7 +31,16 @@ ImageSegBinaryCollection = NDArray[(Any), ImageSegBinary]
 
 # For printing all nmumpy array values
 np.set_printoptions(threshold=np.inf)
+=======
+"""
+Color image with the data
+"""
+>>>>>>> 19fe40c08d2dbe5e3bd04b5a64a9ed09630d94e6
 
+ImageSeg = NDArray[(Any, Any, 3), int]
+"""
+Color image with the mask
+"""
 
 def loadFromDataSources(d_list: List[DataSources]) -> Tuple[List[Image], List[ImageSeg]]:
     """
@@ -285,6 +305,7 @@ def rgb2oneDimLabel(img: ImageSegCollection) -> ImageSegBinaryCollection:
 
 
 if __name__ == "__main__":
+<<<<<<< HEAD
     data, lbl, test_dict = loadCsvFile('img.csv')
     # Normalize data
     data = np.array(data, dtype=np.float32)
@@ -299,3 +320,7 @@ if __name__ == "__main__":
     # plt.show()
     # plt.imshow(img.astype(np.uint8))
     # plt.show()
+=======
+    # data, lbl,test_dict = loadCsvFile('img.csv')
+    net: UNetX = UNetX()
+>>>>>>> 19fe40c08d2dbe5e3bd04b5a64a9ed09630d94e6
