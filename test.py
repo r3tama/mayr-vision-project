@@ -313,9 +313,20 @@ if __name__ == "__main__":
     lbl = np.array(lbl, dtype=np.int32)
     # lblBin = rgb2oneDimLabel(lbl)
 
+    print(lbl.shape)
     # convertDimensions = cdll.LoadLibrary("libconvertDimension.so")
     convertDimensions = np.ctypeslib.load_library("libconvertDimension.so",".")
-    lblBin = convertDimensions.rgb2oneDimLabel(c_void_p(lbl.ctypes.data), lbl.shape[0], lbl.shape[1], lbl.shape[2])
+    lblBin_c = convertDimensions.rgb2oneDimLabel(c_void_p(lbl.ctypes.data), lbl.shape[0], lbl.shape[1], lbl.shape[2])
+    print("uncasted")
+    print(lblBin_c)
+    ptr = np.ctypeslib.ndpointer(c_int32,1,(lbl.shape[0]*720*480))
+    lblBin_c = cast(lblBin_c,POINTER(c_int32))
+    print("casted")
+    print(lblBin_c)
+    # lblBin = np.ctypeslib.as_array(lblBin_c,shape=(lbl.shape[0]*720*480,))
+    lblBin = np.ctypeslib.as_array(ptr,shape=(lbl.shape[0]*720*480,))
+    lblBin.reshape((lbl.shape[0],720,480,1))
+    print(lblBin)
     print("lblBin type: {}, lbl shape: {}".format(type(lblBin), lblBin.shape))
 
     numClasses = 24

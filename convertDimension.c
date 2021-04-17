@@ -1,35 +1,24 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int**** imgArrayCreate(int numImg, int imgWidth, int imgHeight){
-    int**** ret;
-    ret = (int****)calloc(numImg,sizeof(int***));
-    for(int i = 0; i < numImg; i++){
-        ret[i] = (int***)calloc(imgWidth,sizeof(int**));
-        for(int j = 0; j < imgWidth;j++){
-            ret[i][j] = (int**)calloc(imgHeight,sizeof(int*));
-            for(int k = 0; k < imgHeight; k++){
-                ret[i][j][k] = (int*)calloc(1,sizeof(int));
-            }
-        }
-    }
+int32_t* imgArrayCreate(int numImg, int imgWidth, int imgHeight){
+    int32_t* ret = (int32_t*)calloc(numImg*imgWidth*imgHeight*1,sizeof(int32_t));
     return ret;
 }
 
-void imgArrayDestroy(int**** array, int numImg, int imgWidth, int imgHeight){
-    for(int i = 0; i < numImg; i++){
-        for(int j = 0; j < imgWidth; j++){
-            for(int k = 0; k < imgHeight; k++){
-                free(array[i][j][k]);
-            }
-            free(array[i][j]);
-        }
-        free(array[i]);
-    }
+void imgArrayDestroy(int32_t* array){
     free(array);
 }
 
-int remap(int* pixel){
+int reindex3(int i, int j, int k, int ii, int jj, int kk){
+    return i*jj*kk+j*kk+k;
+}
+
+int reindex4(int i, int j, int k, int l, int ii, int jj, int kk, int ll){
+    return i*jj*kk*ll+j*kk*ll+k*ll+l;
+}
+
+int remap(const int32_t* pixel){
     if ((pixel[0] == 0) && (pixel[1] == 0) && (pixel[2] == 0))
         return 0;
     if ((pixel[0] == 128) && (pixel[1] == 64) && (pixel[2] == 128))
@@ -84,19 +73,19 @@ int remap(int* pixel){
     return 0;
 }
 
-int**** rgb2oneDimLabel(int**** img, int numImg, int imgWidth, int imgHeight)
+int32_t* rgb2oneDimLabel(const int32_t* img, int numImg, int imgWidth, int imgHeight)
 {
-    int**** imgBin = imgArrayCreate(numImg,imgWidth,imgHeight);
-    for(int i = 0; i < numImg; i++)
-    {
-        for(int j = 0; j < imgWidth; j++)
-        {
-            for(int k = 0; k < imgHeight; k++)
-            {
-                imgBin[i][j][k][0] = remap(img[i][j][k]);
+    int32_t* imgBin = imgArrayCreate(numImg,imgWidth,imgHeight);
+
+    for(int i = 0; i < numImg; i++){
+        for(int j = 0; j < imgWidth; j++){
+            for(int k = 0; k < imgHeight; k++){
+                imgBin[reindex3(i,j,k,numImg,imgWidth,imgHeight)] = remap(&img[reindex4( i, j, k, 0, numImg, imgWidth, imgHeight, 3)]);
             }
         }
     }
-
+    /*printf("prints?\n");*/
+    /*printf("[C] N: %d %d %d\n",img[reindex4(0,45,34,0,numImg,imgWidth,imgHeight,3)],img[reindex4(0,45,34,1,numImg,imgWidth,imgHeight,3)],img[reindex4(0,45,34,2,numImg,imgWidth,imgHeight,3)]);*/
+    /*printf("[C] N: %d\n",imgBin[reindex3(0,45,34,numImg,imgWidth,imgHeight)]);*/
     return imgBin;
 }
