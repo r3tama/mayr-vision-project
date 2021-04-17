@@ -10,6 +10,7 @@ from typing import List, Any, Tuple,Dict
 from nptyping import NDArray
 from sklearn.model_selection import train_test_split
 from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping
+import tensorflow as tf
 
 # User-defined modules
 from models import *
