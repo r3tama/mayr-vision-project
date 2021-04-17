@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from typing import List, Any, Tuple,Dict
 from nptyping import NDArray
 from sklearn.model_selection import train_test_split
+from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping
 
 # User-defined modules
 from models import UNetX
@@ -136,6 +137,11 @@ def oneDim2rgbLabel(imgBin: ImageSegBinaryCollection) -> ImageSegCollection:
         "conflicting": [0, 0, 255]  # 23
     }
      
+    if len(img.shape) != 4:
+        raise TypeError("Array is not 4D")
+    if img.shape[3] != 3:
+        raise ValueError("Array must have format (numImg, width, height, 3)")
+     
     img = np.zeros((imgBin.shape[0],imgBin.shape[1],imgBin.shape[2], 3), dtype=np.int16)
     count = 0
     for i in range(imgBin.shape[0]):
@@ -227,6 +233,10 @@ def rgb2oneDimLabel(img: ImageSegCollection) -> ImageSegBinaryCollection:
         23 -> conflicting
 
     """
+    if len(imgBin.shape) != 4:
+        raise TypeError("Array is not 4D")
+    if imgBin.shape[3] != 1:
+        raise ValueError("Array must have format (numImg, width, height, 1)")
     imgBin = np.zeros((img.shape[0],img.shape[1],img.shape[2], 1), dtype=np.int16)
     count = 0
     for i in range(img.shape[0]):
@@ -291,10 +301,16 @@ if __name__ == "__main__":
     # Normalize data
     data = np.array(data, dtype=np.float32)
     data = data / 255.0
-    
+    # Convert labels from 3 to 1 dimension
     lbl = np.array(lbl, dtype=np.int16)
-    imgBin = rgb2oneDimLabel(lbl)
-    img = oneDim2rgbLabel(imgBin)
+    print("shape = {}, Length = {}, length shape = {}".format(lbl.shape, len(lbl), len(lbl.shape)))
+    lblBin = rgb2oneDimLabel(lbl)
+
+    numClasses = 24
+
+    # Create checkpoints to save differente models
+
+
     # plt.axis('off')
     # plt.imshow(cv2.cvtColor(lbl[1], cv2.COLOR_BGR2RGB))
     # plt.show()
