@@ -10,6 +10,7 @@ from typing import List, Any, Tuple,Dict
 from nptyping import NDArray
 from sklearn.model_selection import train_test_split
 from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping
+import tensorflow as tf
 
 # User-defined modules
 from models import *
@@ -319,6 +320,8 @@ if __name__ == "__main__":
     # plt.imshow(img.astype(np.uint8))
     # plt.show()
     # data, lbl,test_dict = loadCsvFile('img.csv')
-    net: UNetX = UNetX(img_size=(480,720,3),n_filters=[32,64,128,256,256,128,64,32],n_classes=24)
-    net.build(input_shape=(1,480,720,3))
+    # net: UNetX = UNetX(img_size=(480,720,3),n_filters=[32,64,128,256,256,128,64,32],n_classes=24)
+    # net.build(input_shape=(1,480,720,3))
+    net = UNetXception(32)
+    net.build((1,480,730,3))
     net.summary()
