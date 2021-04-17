@@ -313,7 +313,7 @@ if __name__ == "__main__":
     lblBin = rgb2oneDimLabel(lbl)
 
     numClasses = 24
-    nEpoch = 20
+    nEpochs = 20
 
 
 
@@ -326,7 +326,7 @@ if __name__ == "__main__":
     net: UNetX = UNetX(img_size=(480,720,3),n_filters=[32,64,128,256,256,128,64,32],n_classes=24)
     net.summary()
 
-    net.compile(loss="sparse_categorical_crossentropy", optimizer="adam", metricss=["accuracy"])
+    net.compile(loss="sparse_categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
 
 
     # Create checkpoints to save differente models
@@ -339,9 +339,9 @@ if __name__ == "__main__":
     history = net.fit(data, lblBin, epochs=nEpochs, batch_size=16, callbacks=callbackList)
 
     # Evaluation
-    score = net.evaluate(data, lblBin, verbose=0)
-    print("Test Error: %.2f%%" % (100-score[1]*100))
-    print("%s: %.2f%%" % (net.metrics_names[1], score[1]*100))
+    # score = net.evaluate(data, lblBin, verbose=0)
+    # print("Test Error: %.2f%%" % (100-score[1]*100))
+    # print("%s: %.2f%%" % (net.metrics_names[1], score[1]*100))
 
     # # generate predictions for test
     # testPredict = net.predict(X[test])
