@@ -27,6 +27,8 @@ class UNetXception(_keras.Model):
              
         self.nFilters = nFilters
         self.nClasses = nClasses
+
+        _inputs = _keras.Input((480,720,3))
         
         # Create convolutions for first layer
         self.conv1 = _keras.layers.Conv2D(filters=self.nFilters[0],
@@ -59,35 +61,62 @@ class UNetXception(_keras.Model):
 
         # First half of the network. Downsampling convolutions
 
+        # First convolution x2
         self.sepConv1 = _keras.layers.SeparableConv2D(filters=self.nFilters[1],
                                                             kernel_size=3,
                                                             padding="same")
         self.sepAct1 = _keras.layers.Activation("relu")
         self.sepBatch1 = _keras.layers.BatchNormalization()
+         
+        self.sepConv2 = _keras.layers.SeparableConv2D(filters=self.nFilters[1],
+                                                            kernel_size=3,
+                                                            padding="same")
+        # self.sepAct1 = _keras.layers.Activation("relu")
+        self.sepBatch2 = _keras.layers.BatchNormalization()
+        # Create pooling
+        self.pooling1 = _keras.layers.MaxPooling2D(pool_size=3,
+                                                  strides=2,
+                                                  padding="same")
         self.residualDown1 = _keras.layers.Conv2D(filters=self.nFilters[1],
                                                     kernel_size=1,
                                                     padding="same",
                                                     strides=2)
          
-        # Create pooling
-        self.pooling = _keras.layers.MaxPooling2D(pool_size=3,
-                                                  strides=2,
-                                                  padding="same")
-         
-        self.sepConv2 = _keras.layers.SeparableConv2D(filters=self.nFilters[2],
+        # Second convolution x2
+        self.sepConv3 = _keras.layers.SeparableConv2D(filters=self.nFilters[2],
                                                             kernel_size=3,
                                                             padding="same")
         self.sepAct2 = _keras.layers.Activation("relu")
-        self.sepBatch2 = _keras.layers.BatchNormalization()
+        self.sepBatch3 = _keras.layers.BatchNormalization()
+         
+        self.sepConv4 = _keras.layers.SeparableConv2D(filters=self.nFilters[2],
+                                                            kernel_size=3,
+                                                            padding="same")
+        # self.sepAct2 = _keras.layers.Activation("relu")
+        self.sepBatch4 = _keras.layers.BatchNormalization()
+        self.pooling2 = _keras.layers.MaxPooling2D(pool_size=3,
+                                                  strides=2,
+                                                  padding="same")
         self.residualDown2 = _keras.layers.Conv2D(filters=self.nFilters[2],
                                                     kernel_size=1,
                                                     padding="same",
                                                     strides=2)
-        self.sepConv3 = _keras.layers.SeparableConv2D(filters=self.nFilters[3],
+         
+        # Thrid convolution x2
+        self.sepConv5 = _keras.layers.SeparableConv2D(filters=self.nFilters[3],
                                                             kernel_size=3,
                                                             padding="same")
         self.sepAct3 = _keras.layers.Activation("relu")
-        self.sepBatch3 = _keras.layers.BatchNormalization()
+        self.sepBatch5 = _keras.layers.BatchNormalization()
+         
+        self.sepConv6 = _keras.layers.SeparableConv2D(filters=self.nFilters[3],
+                                                            kernel_size=3,
+                                                            padding="same")
+        # self.sepAct3 = _keras.layers.Activation("relu")
+        self.sepBatch7 = _keras.layers.BatchNormalization()
+        self.pooling3 = _keras.layers.MaxPooling2D(pool_size=3,
+                                                  strides=2,
+                                                  padding="same")
         self.residualDown3 = _keras.layers.Conv2D(filters=self.nFilters[3],
                                                     kernel_size=1,
                                                     padding="same",
@@ -103,41 +132,53 @@ class UNetXception(_keras.Model):
                                                         # padding="same",
                                                         # strides=2)
             # count += 1
+        # Second half. Updampling
 
+        # First deconvolution x2
         self.transConv1 = _keras.layers.Conv2DTranspose(filters=self.nFilters[4],
                                                    kernel_size=3,
                                                    padding="same")
         self.transAct1 = _keras.layers.Activation("relu")
         self.transBatch1 = _keras.layers.BatchNormalization()
         # Create upsampling
-        self.upsampling = _keras.layers.UpSampling2D(size=2)
+        self.upsampling1 = _keras.layers.UpSampling2D(size=2)
+        self.upsamplingResidual1 = _keras.layers.UpSampling2D(size=2)
         self.residualUp1 = _keras.layers.Conv2D(filters=self.nFilters[4],
                                                       kernel_size=1,
                                                       padding="same")
-         
+
+        # Second deconvolution x2 
         self.transConv2 = _keras.layers.Conv2DTranspose(filters=self.nFilters[5],
                                                    kernel_size=3,
                                                    padding="same")
         self.transAct2 = _keras.layers.Activation("relu")
         self.transBatch2 = _keras.layers.BatchNormalization()
+        self.upsampling2 = _keras.layers.UpSampling2D(size=2)
+        self.upsamplingResidual2 = _keras.layers.UpSampling2D(size=2)
         self.residualUp2 = _keras.layers.Conv2D(filters=self.nFilters[5],
                                                       kernel_size=1,
                                                       padding="same")
          
+        # Thrid deconvolution x2
         self.transConv3 = _keras.layers.Conv2DTranspose(filters=self.nFilters[6],
                                                    kernel_size=3,
                                                    padding="same")
         self.transAct3 = _keras.layers.Activation("relu")
         self.transBatch3 = _keras.layers.BatchNormalization()
+        self.upsampling3 = _keras.layers.UpSampling2D(size=2)
+        self.upsamplingResidual3 = _keras.layers.UpSampling2D(size=2)
         self.residualUp3 = _keras.layers.Conv2D(filters=self.nFilters[6],
                                                       kernel_size=1,
                                                       padding="same")
          
+        # Fourth deconvolution x2
         self.transConv4 = _keras.layers.Conv2DTranspose(filters=self.nFilters[7],
                                                    kernel_size=3,
                                                    padding="same")
         self.transAct4 = _keras.layers.Activation("relu")
         self.transBatch4 = _keras.layers.BatchNormalization()
+        self.upsampling4 = _keras.layers.UpSampling2D(size=2)
+        self.upsamplingResidual4 = _keras.layers.UpSampling2D(size=2)
         self.residualUp4 = _keras.layers.Conv2D(filters=self.nFilters[7],
                                                       kernel_size=1,
                                                       padding="same")
@@ -155,11 +196,13 @@ class UNetXception(_keras.Model):
             # count += 1
 
         # Create final layer with classes number as size
-        self.out = _keras.layers.Conv2D(filters=self.nClasses,
+        self._output = _keras.layers.Conv2D(filters=self.nClasses,
                                         kernel_size=3,
                                         activation="softmax",
                                         padding="same")
 
+        self.out = self.call(_inputs)
+        super().__init__(inputs=_inputs, outputs=self.out)
 
     def call(self, inputs):
         # Create first convolutional layer
@@ -175,18 +218,18 @@ class UNetXception(_keras.Model):
         x = self.sepBatch1(x)
          
         x = self.sepAct1(x)
-        x = self.sepConv1(x)
-        # x = self.sepBatch1(x)
+        x = self.sepConv2(x)
+        x = self.sepBatch2(x)
          
-        # x = self.pooling(x)
-        # residual = self.residualDown1(prevLayer)
-        # x = _keras.layers.add([x, residual])
-        # prevLayer = x
+        x = self.pooling1(x)
+        residual = self.residualDown1(prevLayer)
+        x = _keras.layers.add([x, residual])
+        prevLayer = x
              
         # for _ in range(2):
-        # x = self.sepConv2(x)
-        # x = self.sepBatch2(x)
-        # x = self.sepAct2(x)
+        x = self.sepConv3(x)
+        x = self.sepBatch3(x)
+        x = self.sepAct1(x)
          
         # x = self.sepConv2(x)
         # x = self.sepBatch2(x)
