@@ -75,8 +75,8 @@ def loadCsvFile(filename: str) -> Tuple[List[Image], List[ImageSeg],List[DataSou
         raise TypeError("Name is not a string")
     with open(filename) as csvfile:
         data_storage = list(csv.DictReader(csvfile, delimiter=";"))
-        # train_dict, test_dict = train_test_split(data_storage,test_size=0.3,train_size=0.7,random_state=69)
-        train_dict, test_dict = train_test_split(data_storage,test_size=0.95,train_size=0.05,random_state=69)
+        train_dict, test_dict = train_test_split(data_storage,test_size=0.3,train_size=0.7,random_state=69)
+        # train_dict, test_dict = train_test_split(data_storage,test_size=0.95,train_size=0.05,random_state=69)
         data,lbl = loadFromDataSources(train_dict)
         return data,lbl,test_dict
 
@@ -140,10 +140,10 @@ def oneDim2rgbLabel(imgBin: ImageSegBinaryCollection) -> ImageSegCollection:
         "conflicting": [0, 0, 255]  # 23
     }
      
-    if len(img.shape) != 4:
+    if len(imgBin.shape) != 4:
         raise TypeError("Array is not 4D")
-    if img.shape[3] != 3:
-        raise ValueError("Array must have format (numImg, width, height, 3)")
+    if imgBin.shape[3] != 1:
+        raise ValueError("Array must have format (numImg, width, height, 1)")
      
     img = np.zeros((imgBin.shape[0],imgBin.shape[1],imgBin.shape[2], 3), dtype=np.int16)
     count = 0
@@ -236,10 +236,10 @@ def rgb2oneDimLabel(img: ImageSegCollection) -> ImageSegBinaryCollection:
         23 -> conflicting
 
     """
-    if len(imgBin.shape) != 4:
+    if len(img.shape) != 4:
         raise TypeError("Array is not 4D")
-    if imgBin.shape[3] != 1:
-        raise ValueError("Array must have format (numImg, width, height, 1)")
+    if img.shape[3] != 3:
+        raise ValueError("Array must have format (numImg, width, height, 3)")
     imgBin = np.zeros((img.shape[0],img.shape[1],img.shape[2], 1), dtype=np.int16)
     count = 0
     for i in range(img.shape[0]):
@@ -300,18 +300,21 @@ def rgb2oneDimLabel(img: ImageSegCollection) -> ImageSegBinaryCollection:
 
 
 if __name__ == "__main__":
-    # data, lbl, test_dict = loadCsvFile('img.csv')
+     
+    # Set where the channels are specified
+    tf.keras.backend.set_image_data_format("channels_last")
+     
+    data, lbl, test_dict = loadCsvFile('img.csv')
     # Normalize data
-    # data = np.array(data, dtype=np.float32)
-    # data = data / 255.0
+    data = np.array(data, dtype=np.float32)
+    data = data / 255.0
     # Convert labels from 3 to 1 dimension
-    # lbl = np.array(lbl, dtype=np.int16)
-    # print("shape = {}, Length = {}, length shape = {}".format(lbl.shape, len(lbl), len(lbl.shape)))
-    # lblBin = rgb2oneDimLabel(lbl)
+    lbl = np.array(lbl, dtype=np.int16)
+    lblBin = rgb2oneDimLabel(lbl)
 
-    # numClasses = 24
+    numClasses = 24
+    nEpoch = 20
 
-    # Create checkpoints to save differente models
 
 
     # plt.axis('off')
@@ -321,8 +324,67 @@ if __name__ == "__main__":
     # plt.show()
     # data, lbl,test_dict = loadCsvFile('img.csv')
     net: UNetX = UNetX(img_size=(480,720,3),n_filters=[32,64,128,256,256,128,64,32],n_classes=24)
-    model = UNetXception(nFilters=[32,64,128,256,256,128,64,32], nClasses=24)
-    # model.build((1,480,720,3))
-    model.summary()
-    # net.build(input_shape=(None,480,720,3))
-    # net.summary()
+    net.summary()
+
+    net.compile(loss="sparse_categorical_crossentropy", optimizer="adam", metricss=["accuracy"])
+
+
+    # Create checkpoints to save differente models
+    path = "weightsEpoch_{epoch:02d}_valLoss_{val_loss:.2f}.hdf5"
+    path2 = "bestModel.hdf5"
+    checkpoint = ModelCheckpoint(path, monitor="val_loss", verbose=1, save_best_only=True)
+    checkpoint2 = ModelCheckpoint(path2, monitor="val_loss", verbose=1, save_best_only=True)
+    callbackList = [checkpoint, checkpoint2]
+     
+    history = net.fit(data, lblBin, epochs=nEpochs, batch_size=16, callbacks=callbackList)
+
+    # Evaluation
+    score = net.evaluate(data, lblBin, verbose=0)
+    print("Test Error: %.2f%%" % (100-score[1]*100))
+    print("%s: %.2f%%" % (net.metrics_names[1], score[1]*100))
+
+    # # generate predictions for test
+    # testPredict = net.predict(X[test])
+    # ytestPredict = []
+    # for element in testPredict:
+        # index, value = max(enumerate(element), key=operator.itemgetter(1))
+        # ytestPredict.append(index)
+
+    # print('\n\n----------------------------------------------------')
+    # print('Confusion Matrix')
+    # testConf=confusion_matrix(y[test], ytestPredict)
+    # print(testConf)
+
+    # Loss Curves
+    plt.figure(figsize=[8,6])
+    plt.plot(history.history['loss'],'r',linewidth=3.0)
+    plt.plot(history.history['val_loss'],'b',linewidth=3.0)
+    plt.legend(['Training loss', 'Validation Loss'],fontsize=18)
+    plt.xlabel('Epochs ',fontsize=16)
+    plt.ylabel('Loss',fontsize=16)
+    plt.title('Loss Curves',fontsize=16)
+
+    # save the losses figure
+    plt.tight_layout()
+    plt.savefig('losses.png')
+    plt.close()
+      
+    # Accuracy Curves
+    plt.figure(figsize=[8,6])
+    plt.plot(history.history['accuracy'],'r',linewidth=3.0)
+    plt.plot(history.history['val_accuracy'],'b',linewidth=3.0)
+    plt.legend(['Training Accuracy', 'Validation Accuracy'],fontsize=18)
+    plt.xlabel('Epochs ',fontsize=16)
+    plt.ylabel('Accuracy',fontsize=16)
+    plt.title('Accuracy Curves',fontsize=16)
+
+    # save the accuracies figure
+    plt.tight_layout()
+    plt.savefig('accs.png')
+    plt.close()
+     
+    # # Save confusion matrix in file
+    # with open('results.txt', '+a') as file:
+        # file.write('\n\n-------------------------------------------')
+        # file.write('Confusion Matrix fold '+str(count))
+        # file.write(testConf)
