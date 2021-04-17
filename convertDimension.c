@@ -84,6 +84,8 @@ int32_t* rgb2oneDimLabel(const int32_t* img, int numImg, int imgWidth, int imgHe
             }
         }
     }
+    if(typeof(img) == int32_t)
+        printf("1");
     /*printf("prints?\n");*/
     /*printf("[C] N: %d %d %d\n",img[reindex4(0,45,34,0,numImg,imgWidth,imgHeight,3)],img[reindex4(0,45,34,1,numImg,imgWidth,imgHeight,3)],img[reindex4(0,45,34,2,numImg,imgWidth,imgHeight,3)]);*/
     /*printf("[C] N: %d\n",imgBin[reindex3(0,45,34,numImg,imgWidth,imgHeight)]);*/
