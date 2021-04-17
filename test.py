@@ -78,8 +78,8 @@ def loadCsvFile(filename: str) -> Tuple[List[Image], List[ImageSeg],List[DataSou
         raise TypeError("Name is not a string")
     with open(filename) as csvfile:
         data_storage = list(csv.DictReader(csvfile, delimiter=";"))
-        train_dict, test_dict = train_test_split(data_storage,test_size=0.3,train_size=0.7,random_state=69)
-        # train_dict, test_dict = train_test_split(data_storage,test_size=0.95,train_size=0.05,random_state=69)
+        # train_dict, test_dict = train_test_split(data_storage,test_size=0.3,train_size=0.7,random_state=69)
+        train_dict, test_dict = train_test_split(data_storage,test_size=0.95,train_size=0.05,random_state=69)
         data,lbl = loadFromDataSources(train_dict)
         return data,lbl,test_dict
 
