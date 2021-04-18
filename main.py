@@ -13,7 +13,6 @@ from sklearn.model_selection import train_test_split
 from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping
 import tensorflow as tf
 from ctypes import *
-from sklearn.metrics import confusion_matrix
 
 # User-defined modules
 from models import *
@@ -57,8 +56,6 @@ def loadFromDataSources(d_list: List[DataSources]) -> Tuple[List[Image], List[Im
             auxLbl = cv2.imread(row["label"])
             auxData = cv2.resize(auxData, (304,304))
             auxLbl = cv2.resize(auxLbl, (304,304))
-            # auxData = cv2.resize(auxData, (304,720))
-            # auxLbl = cv2.resize(auxLbl, (304,720))
             if auxData is not None:
                 data.append(auxData)
             if auxLbl is not None:
@@ -337,10 +334,12 @@ def rgb2oneDimLabel(img: ImageSegCollection) -> ImageSegBinaryCollection:
     print("Images converted")
     return imgBin
 
-
 if __name__ == "__main__":
 
+    # Clear gpu session
     tf.keras.backend.clear_session()
+    
+    # Limit gpu memory. Unncomment to set limit to 2GB
     gpus = tf.config.list_physical_devices('GPU')
     if gpus:
         try:
@@ -371,9 +370,7 @@ if __name__ == "__main__":
     nEpochs = 150
     batchSize = 32
 
-    # net: UNetX = UNetX(img_size=(560,560,3),n_filters=[64,128,256,512,512,256,128,64], n_classes=numClasses)
     net: UNetX = UNetX(img_size=(224,224,3),n_filters=[32,64,128,256,256,128,64,32], n_classes=numClasses)
-    # net: UNetX = UNetX(img_size=(720,480,3),n_filters=[32,64,128,256,256,128,64,32],n_classes=24)
     net.summary()
 
     net.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
@@ -415,43 +412,4 @@ if __name__ == "__main__":
     plt.tight_layout()
     plt.savefig('resultTraining/accs.png')
     plt.close()
-
-    # Load test values
-    dataTest, lblTest = loadFromDataSources(test_dict)
-    # Normalize data and convert lbl from 3 to 1 dimension
-    dataTest = np.array(dataTest, dtype=np.float32)
-    dataTest = dataTest / 255.0
-    # Convert labels from 3 to 1 dimension
-    lblTest = np.array(lblTest, dtype=np.int32)
-    # lblTestBin = rgb2oneDimLabel(lblTest)
-
-
-
-    # generate predictions for test
-    dataPredict = net.predict(dataTest)
-    lblPredict = []
-    for element in lblPredict:
-        index, value = max(enumerate(element), key=operator.itemgetter(1))
-        print("Index: {}, value: {}".format(index, value))
-        lblPredict.append(index)
-
-    print('\n\n----------------------------------------------------')
-    print('Confusion Matrix')
-    testConf=confusion_matrix(lblTest, lblPredict)
-    print(testConf)
-
-
-    # Evaluation
-    try:
-        score = net.evaluate(dataTest, lblTest, verbose=0)
-        print("Test Error: %.2f%%" % (100-score[1]*100))
-        print("%s: %.2f%%" % (net.metrics_names[1], score[1]*100))
-    except:
-        pass
-     
-    # Save confusion matrix in file
-    with open('results.txt', '+a') as file:
-        file.write('\n\n-------------------------------------------')
-        file.write('Confusion Matrix fold ')
-        file.write(testConf)
 
