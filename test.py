@@ -13,6 +13,7 @@ from sklearn.model_selection import train_test_split
 from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping
 import tensorflow as tf
 from ctypes import *
+from sklearn.metrics import confusion_matrix
 
 # User-defined modules
 from models import *
@@ -298,7 +299,7 @@ def rgb2oneDimLabel(img: ImageSegCollection) -> ImageSegBinaryCollection:
 
 
 if __name__ == "__main__":
-     
+
     tf.keras.backend.clear_session()
     gpus = tf.config.list_physical_devices('GPU')
     if gpus:
@@ -317,7 +318,7 @@ if __name__ == "__main__":
 
     # Set where the channels are specified
     tf.keras.backend.set_image_data_format("channels_last")
-     
+
     data, lbl, test_dict = loadCsvFile('img.csv')
     # Normalize data
     data = np.array(data, dtype=np.float32)
@@ -351,7 +352,7 @@ if __name__ == "__main__":
     numClasses = 24
     nEpochs = 150
     batchSize = 24
-     
+
     net: UNetX = UNetX(img_size=(600,600,3),n_filters=[32,64,128,256,256,128,64,32], n_classes=numClasses)
     # net: UNetX = UNetX(img_size=(720,480,3),n_filters=[32,64,128,256,256,128,64,32],n_classes=24)
     net.summary()
@@ -365,25 +366,8 @@ if __name__ == "__main__":
     checkpoint = ModelCheckpoint(path, monitor='val_loss', verbose=1, save_best_only=True)
     checkpoint2 = ModelCheckpoint(path2, monitor='val_loss', verbose=1, save_best_only=True)
     callbackList = [checkpoint, checkpoint2]
-     
+
     history = net.fit(data, lblBin, validation_split=0.3, epochs=nEpochs, batch_size=batchSize, callbacks=callbackList)
-
-    # # Evaluation
-    # # score = net.evaluate(data, lblBin, verbose=0)
-    # # print("Test Error: %.2f%%" % (100-score[1]*100))
-    # # print("%s: %.2f%%" % (net.metrics_names[1], score[1]*100))
-
-    # # # generate predictions for test
-    # # testPredict = net.predict(X[test])
-    # # ytestPredict = []
-    # # for element in testPredict:
-        # # index, value = max(enumerate(element), key=operator.itemgetter(1))
-        # # ytestPredict.append(index)
-
-    # # print('\n\n----------------------------------------------------')
-    # # print('Confusion Matrix')
-    # # testConf=confusion_matrix(y[test], ytestPredict)
-    # # print(testConf)
 
     # Loss Curves
     plt.figure(figsize=[8,6])
@@ -398,7 +382,7 @@ if __name__ == "__main__":
     plt.tight_layout()
     plt.savefig('resultTraining/losses.png')
     plt.close()
-      
+
     # Accuracy Curves
     plt.figure(figsize=[8,6])
     plt.plot(history.history['accuracy'],'r',linewidth=3.0)
@@ -412,9 +396,37 @@ if __name__ == "__main__":
     plt.tight_layout()
     plt.savefig('resultTraining/accs.png')
     plt.close()
+
+    # Load test values
+    dataTest, lblTest = loadFromDataSources(test_dict)
+    # Normalize data and convert lbl from 3 to 1 dimension
+    dataTest = np.array(dataTest, dtype=np.float32)
+    dataTest = dataTest / 255.0
+    # Convert labels from 3 to 1 dimension
+    lblTest = np.array(lblTest, dtype=np.int32)
+    lblTestBin = rgb2oneDimLabel(lblTest)
+
+
+
+    # generate predictions for test
+    dataPredict = net.predict(dataTest)
+    lblPredict = []
+    for element in lblPredict:
+        index, value = max(enumerate(element), key=operator.itemgetter(1))
+        lblPredict.append(index)
+
+    print('\n\n----------------------------------------------------')
+    print('Confusion Matrix')
+    testConf=confusion_matrix(lblTestBin, lblPredict)
+    print(testConf)
+
+    # Evaluation
+    score = net.evaluate(dataTest, lblTest, verbose=0)
+    print("Test Error: %.2f%%" % (100-score[1]*100))
+    print("%s: %.2f%%" % (net.metrics_names[1], score[1]*100))
      
-    # # # Save confusion matrix in file
-    # # with open('results.txt', '+a') as file:
-        # # file.write('\n\n-------------------------------------------')
-        # # file.write('Confusion Matrix fold '+str(count))
-        # # file.write(testConf)
+    # Save confusion matrix in file
+    with open('results.txt', '+a') as file:
+        file.write('\n\n-------------------------------------------')
+        file.write('Confusion Matrix fold '+str(count))
+        file.write(testConf)
