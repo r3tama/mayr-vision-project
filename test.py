@@ -71,16 +71,12 @@ def getItems(data_src,lbl_src):
     count = 0
     x = np.zeros((len(data_src),224,224,3),dtype=np.int32)
     for j,path in enumerate(data_src):
-        if not path.startswith("."):
-            continue
         count += 1
         print("{}: {}".format(count,path))
         x[j] = tf.keras.preprocessing.image.load_img(path,target_size=(224,224))
     count = 0
     y = np.zeros((len(data_src),224,224,1),dtype=np.int32)
     for j,path in enumerate(lbl_src):
-        if not path.startswith("."):
-            continue
         count += 1
         print("{}: {}".format(count,path))
         img = tf.keras.preprocessing.image.load_img(path,color_mode="grayscale",target_size=(224,224))
@@ -119,7 +115,9 @@ def loadCsvFile2(filename: str) -> Tuple[List[str], List[str], List[str], List[s
     if not isinstance(filename, str):
         raise TypeError("Name is not a string")
     with open(filename) as csvfile:
-        data_storage = list(csv.reader(csvfile, delimiter=";"))
+        reader = csv.reader(csvfile, delimiter=";")
+        next(reader)
+        data_storage = list(reader)
         train_dict, test_dict = train_test_split(data_storage,test_size=0.3,train_size=0.7,random_state=69)
         train_data_src = [d[0] for d in train_dict]
         train_labl_src = [d[1] for d in train_dict]
@@ -353,10 +351,6 @@ if __name__ == "__main__":
                     # [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=2048)])
         except RuntimeError:
             print("Invalid GPU configuration")
-    # config = tf.compat.v1.ConfigProto()
-    # config.gpu_options.per_process_gpu_memory_fraction = 0.75
-    # config.gpu_options.allow_growth = True
-    # session = tf.compat.v1.InteractiveSession(config = config)
 
     # Set where the channels are specified
     tf.keras.backend.set_image_data_format("channels_last")
@@ -369,28 +363,8 @@ if __name__ == "__main__":
     data = data / 255.0
     # Convert labels from 3 to 1 dimension
     # lbl = np.array(lbl, dtype=np.int32)
-    lblBin = rgb2oneDimLabel(lbl)
-
-    # convertDimensions = CDLL("libconvertDimension.so")
-    # lblBin = convertDimensions.rgb2oneDimLabel(lbl, lbl.shape[0], lbl.shape[1], lbl.shape[2])
-    # print("lblBin type: {}, lbl shape: {}".format(type(lblBin), lblBin.shape))
     # lblBin = rgb2oneDimLabel(lbl)
 
-    # print(lbl.shape)
-    # convertDimensions = cdll.LoadLibrary("libconvertDimension.so")
-    # convertDimensions = np.ctypeslib.load_library("libconvertDimension.so",".")
-    # lblBin_c = convertDimensions.rgb2oneDimLabel(c_void_p(lbl.ctypes.data), lbl.shape[0], lbl.shape[1], lbl.shape[2])
-    # print("uncasted")
-    # print(lblBin_c)
-    # ptr = np.ctypeslib.ndpointer(c_int32,1,(lbl.shape[0]*720*304))
-    # lblBin_c = cast(lblBin_c,POINTER(c_int32))
-    # print("casted")
-    # print(lblBin_c)
-    # # lblBin = np.ctypeslib.as_array(lblBin_c,shape=(lbl.shape[0]*720*304,))
-    # lblBin = np.ctypeslib.as_array(ptr,shape=(lbl.shape[0]*720*304,))
-    # lblBin.reshape((lbl.shape[0],720,304,1))
-    # print(lblBin)
-    # print("lblBin type: {}, lbl shape: {}".format(type(lblBin), lblBin.shape))
 
     # Net params
     numClasses = 3
@@ -398,7 +372,7 @@ if __name__ == "__main__":
     batchSize = 8
 
     # net: UNetX = UNetX(img_size=(560,560,3),n_filters=[64,128,256,512,512,256,128,64], n_classes=numClasses)
-    net: UNetX = UNetX(img_size=(304,304,3),n_filters=[32,64,128,256,256,128,64,32], n_classes=numClasses)
+    net: UNetX = UNetX(img_size=(224,224,3),n_filters=[32,64,128,256,256,128,64,32], n_classes=numClasses)
     # net: UNetX = UNetX(img_size=(720,480,3),n_filters=[32,64,128,256,256,128,64,32],n_classes=24)
     net.summary()
 
@@ -412,7 +386,7 @@ if __name__ == "__main__":
     checkpoint2 = ModelCheckpoint(path2, monitor='val_loss', verbose=1, save_best_only=True)
     callbackList = [checkpoint, checkpoint2]
 
-    history = net.fit(data, lblBin, validation_split=0.3, epochs=nEpochs, batch_size=batchSize, callbacks=callbackList)
+    history = net.fit(data, lbl, validation_split=0.3, epochs=nEpochs, batch_size=batchSize, callbacks=callbackList)
 
     # Loss Curves
     plt.figure(figsize=[8,6])
@@ -449,7 +423,7 @@ if __name__ == "__main__":
     dataTest = dataTest / 255.0
     # Convert labels from 3 to 1 dimension
     lblTest = np.array(lblTest, dtype=np.int32)
-    lblTestBin = rgb2oneDimLabel(lblTest)
+    # lblTestBin = rgb2oneDimLabel(lblTest)
 
 
 
@@ -463,7 +437,7 @@ if __name__ == "__main__":
 
     print('\n\n----------------------------------------------------')
     print('Confusion Matrix')
-    testConf=confusion_matrix(lblTestBin, lblPredict)
+    testConf=confusion_matrix(lblTest, lblPredict)
     print(testConf)
 
 
