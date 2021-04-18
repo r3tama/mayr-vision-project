@@ -355,7 +355,7 @@ if __name__ == "__main__":
     tf.keras.backend.set_image_data_format("channels_last")
 
     # data, lbl, test_dict = loadCsvFile('img.csv')
-    train_data_src,train_labl_src, test_data_src,test_labl_src = loadCsvFile2('img2.csv')
+    train_data_src,train_labl_src, test_data_src,test_labl_src = loadCsvFile2('dogCat.csv')
     data,lbl = getItems(train_data_src,train_labl_src)
     # Normalize data
     # data = np.array(data, dtype=np.float32)
