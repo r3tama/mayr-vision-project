@@ -67,6 +67,28 @@ def loadFromDataSources(d_list: List[DataSources]) -> Tuple[List[Image], List[Im
             sys.stderr.write("Could not load an image")
     return data, lbl
 
+def getItems(data_src,lbl_src):
+    count = 0
+    x = np.zeros((len(data_src),224,224,3),dtype=np.int32)
+    for j,path in enumerate(data_src):
+        if not path.startswith("."):
+            continue
+        count += 1
+        print("{}: {}".format(count,path))
+        x[j] = tf.keras.preprocessing.image.load_img(path,target_size=(224,224))
+    count = 0
+    y = np.zeros((len(data_src),224,224,1),dtype=np.int32)
+    for j,path in enumerate(lbl_src):
+        if not path.startswith("."):
+            continue
+        count += 1
+        print("{}: {}".format(count,path))
+        img = tf.keras.preprocessing.image.load_img(path,color_mode="grayscale",target_size=(224,224))
+        y[j] = np.expand_dims(img,2)
+        y[j] -= 1
+        
+    return x,y
+
 def loadCsvFile(filename: str) -> Tuple[List[Image], List[ImageSeg],List[DataSources]]:
     """
         Function to load original images and ground truth images from .csv file
@@ -81,9 +103,29 @@ def loadCsvFile(filename: str) -> Tuple[List[Image], List[ImageSeg],List[DataSou
     with open(filename) as csvfile:
         data_storage = list(csv.DictReader(csvfile, delimiter=";"))
         train_dict, test_dict = train_test_split(data_storage,test_size=0.3,train_size=0.7,random_state=69)
-        # train_dict, test_dict = train_test_split(data_storage,test_size=0.95,train_size=0.05,random_state=69)
+        train_dict, test_dict = train_test_split(data_storage,test_size=0.95,train_size=0.05,random_state=69)
         data,lbl = loadFromDataSources(train_dict)
         return data,lbl,test_dict
+
+def loadCsvFile2(filename: str) -> Tuple[List[str], List[str], List[str], List[str]]:
+    """
+        Function to load original images and ground truth images from .csv file
+        Args:
+            filename: .csv file name
+
+        Returns:
+            a tuple with a list of original images  and a list of ground truth images
+    """
+    if not isinstance(filename, str):
+        raise TypeError("Name is not a string")
+    with open(filename) as csvfile:
+        data_storage = list(csv.reader(csvfile, delimiter=";"))
+        train_dict, test_dict = train_test_split(data_storage,test_size=0.3,train_size=0.7,random_state=69)
+        train_data_src = [d[0] for d in train_dict]
+        train_labl_src = [d[1] for d in train_dict]
+        test_data_src = [d[0] for d in test_dict]
+        test_labl_src = [d[1] for d in test_dict]
+        return train_data_src,train_labl_src, test_data_src,test_labl_src
 
 def oneDim2rgbLabel(imgBin: ImageSegBinaryCollection) -> ImageSegCollection:
     """
@@ -319,12 +361,14 @@ if __name__ == "__main__":
     # Set where the channels are specified
     tf.keras.backend.set_image_data_format("channels_last")
 
-    data, lbl, test_dict = loadCsvFile('img.csv')
+    # data, lbl, test_dict = loadCsvFile('img.csv')
+    train_data_src,train_labl_src, test_data_src,test_labl_src = loadCsvFile2('img.csv')
+    data,lbl = getItems(train_data_src,train_labl_src)
     # Normalize data
-    data = np.array(data, dtype=np.float32)
+    # data = np.array(data, dtype=np.float32)
     data = data / 255.0
     # Convert labels from 3 to 1 dimension
-    lbl = np.array(lbl, dtype=np.int32)
+    # lbl = np.array(lbl, dtype=np.int32)
     lblBin = rgb2oneDimLabel(lbl)
 
     # convertDimensions = CDLL("libconvertDimension.so")
