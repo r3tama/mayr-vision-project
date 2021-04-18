@@ -22,6 +22,7 @@ DataSources = Dict[str,str]
 Image = NDArray[(Any, Any, 3), int]
 ImageSeg = NDArray[(Any, Any, 3), int]
 ImageSegBinary = NDArray[(Any, Any, 1), int]
+ImageCollection = NDArray[(Any), Image]
 ImageSegCollection = NDArray[(Any), ImageSeg]
 ImageSegBinaryCollection = NDArray[(Any), ImageSegBinary]
 
@@ -64,7 +65,16 @@ def loadFromDataSources(d_list: List[DataSources]) -> Tuple[List[Image], List[Im
             sys.stderr.write("Could not load an image")
     return data, lbl
 
-def getItems(data_src,lbl_src):
+def getItems(data_src: List[str],lbl_src: List[str]) -> Tuple[ImageCollection,ImageSegBinaryCollection]:
+    """
+    Funcion that opens and loads the imges given as paths for the data and labels
+    Args:
+        data_src: List with the paths to the images that will be loaded as data
+        lbl_src: List with the paths to the images that will be loaded as labels
+
+    Returns:
+        Tuple with the collection of the data and the collection of the labels
+    """
     count = 0
     x = np.zeros((len(data_src),224,224,3),dtype=np.int32)
     for j,path in enumerate(data_src):
