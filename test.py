@@ -54,10 +54,10 @@ def loadFromDataSources(d_list: List[DataSources]) -> Tuple[List[Image], List[Im
                 print(count)
             auxData = cv2.imread(row["data"])
             auxLbl = cv2.imread(row["label"])
-            # auxData = cv2.resize(auxData, (224,224))
-            # auxLbl = cv2.resize(auxLbl, (224,224))
-            auxData = cv2.resize(auxData, (480,720))
-            auxLbl = cv2.resize(auxLbl, (480,720))
+            auxData = cv2.resize(auxData, (600,600))
+            auxLbl = cv2.resize(auxLbl, (600,600))
+            # auxData = cv2.resize(auxData, (480,720))
+            # auxLbl = cv2.resize(auxLbl, (480,720))
             if auxData is not None:
                 data.append(auxData)
             if auxLbl is not None:
@@ -300,21 +300,21 @@ def rgb2oneDimLabel(img: ImageSegCollection) -> ImageSegBinaryCollection:
 if __name__ == "__main__":
      
     tf.keras.backend.clear_session()
-    # gpus = tf.config.list_physical_devices('GPU')
-    # if gpus:
-        # try:
-            # for gpu in gpus:
-                # tf.config.experimental.set_memory_growth(gpu, True)
-                # tf.config.experimental.set_virtual_device_configuration(
-                    # gpu,
-                    # [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=2048)])
-        # except RuntimeError:
-            # print("Invalid GPU configuration")
+    gpus = tf.config.list_physical_devices('GPU')
+    if gpus:
+        try:
+            for gpu in gpus:
+                tf.config.experimental.set_memory_growth(gpu, True)
+                tf.config.experimental.set_virtual_device_configuration(
+                    gpu,
+                    [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=2048)])
+        except RuntimeError:
+            print("Invalid GPU configuration")
     # Set where the channels are specified
-    config = tf.compat.v1.ConfigProto()
-    config.gpu_options.per_process_gpu_memory_fraction = 0.75
-    config.gpu_options.allow_growth = True
-    session = tf.compat.v1.InteractiveSession(config = config)
+    # config = tf.compat.v1.ConfigProto()
+    # config.gpu_options.per_process_gpu_memory_fraction = 0.75
+    # config.gpu_options.allow_growth = True
+    # session = tf.compat.v1.InteractiveSession(config = config)
 
     tf.keras.backend.set_image_data_format("channels_last")
      
@@ -372,8 +372,8 @@ if __name__ == "__main__":
     # callbackList = [checkpoint, checkpoint2]
      
     # history = net.fit(data, lblBin, epochs=nEpochs, batch_size=16, callbacks=callbackList)
-    # net: UNetX = UNetX(img_size=(224,224,3),n_filters=[32,64,128,256,256,128,64,32],n_classes=24)
-    net: UNetX = UNetX(img_size=(720,480,3),n_filters=[32,64,128,256,256,128,64,32],n_classes=24)
+    net: UNetX = UNetX(img_size=(600,600,3),n_filters=[32,64,128,256,256,128,64,32],n_classes=24)
+    # net: UNetX = UNetX(img_size=(720,480,3),n_filters=[32,64,128,256,256,128,64,32],n_classes=24)
     net.summary()
 
     net.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
