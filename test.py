@@ -310,12 +310,12 @@ if __name__ == "__main__":
                     [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=2048)])
         except RuntimeError:
             print("Invalid GPU configuration")
-    # Set where the channels are specified
     # config = tf.compat.v1.ConfigProto()
     # config.gpu_options.per_process_gpu_memory_fraction = 0.75
     # config.gpu_options.allow_growth = True
     # session = tf.compat.v1.InteractiveSession(config = config)
 
+    # Set where the channels are specified
     tf.keras.backend.set_image_data_format("channels_last")
      
     data, lbl, test_dict = loadCsvFile('img.csv')
@@ -347,46 +347,26 @@ if __name__ == "__main__":
     # print(lblBin)
     # print("lblBin type: {}, lbl shape: {}".format(type(lblBin), lblBin.shape))
 
+    # Net params
     numClasses = 24
     nEpochs = 150
-
-
-
-    # plt.axis('off')
-    # plt.imshow(cv2.cvtColor(lbl[1], cv2.COLOR_BGR2RGB))
-    # plt.show()
-    # plt.imshow(img.astype(np.uint8))
-    # plt.show()
-    # data, lbl,test_dict = loadCsvFile('img.csv')
-    # net: UNetX = UNetX(img_size=(720,480,3),n_filters=[32,64,128,256,256,128,64,32],n_classes=24)
-    # net.summary()
-
-    # net.compile(loss="sparse_categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
-
-
-    # # Create checkpoints to save differente models
-    # path = "weightsEpoch_{epoch:02d}_valLoss_{val_loss:.2f}.hdf5"
-    # path2 = "bestModel.hdf5"
-    # checkpoint = ModelCheckpoint(path, monitor="val_loss", verbose=1, save_best_only=True)
-    # checkpoint2 = ModelCheckpoint(path2, monitor="val_loss", verbose=1, save_best_only=True)
-    # callbackList = [checkpoint, checkpoint2]
+    batchSize = 24
      
-    # history = net.fit(data, lblBin, epochs=nEpochs, batch_size=16, callbacks=callbackList)
-    net: UNetX = UNetX(img_size=(600,600,3),n_filters=[32,64,128,256,256,128,64,32],n_classes=24)
+    net: UNetX = UNetX(img_size=(600,600,3),n_filters=[32,64,128,256,256,128,64,32], n_classes=numClasses)
     # net: UNetX = UNetX(img_size=(720,480,3),n_filters=[32,64,128,256,256,128,64,32],n_classes=24)
     net.summary()
 
     net.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 
 
-    # Create checkpoints to save differente models
-    path = "weightsEpoch_{epoch:02d}_valLoss_{val_loss:.2f}.hdf5"
-    path2 = "bestModel.hdf5"
+    # Create checkpoints to save different models
+    path = "resultTraining/weightsEpoch_{epoch:02d}_valLoss_{val_loss:.2f}.hdf5"
+    path2 = "resultTraining/bestModel.hdf5"
     checkpoint = ModelCheckpoint(path, monitor='val_loss', verbose=1, save_best_only=True)
     checkpoint2 = ModelCheckpoint(path2, monitor='val_loss', verbose=1, save_best_only=True)
     callbackList = [checkpoint, checkpoint2]
      
-    history = net.fit(data, lblBin, validation_split=0.2, epochs=nEpochs, batch_size=16, callbacks=callbackList)
+    history = net.fit(data, lblBin, validation_split=0.3, epochs=nEpochs, batch_size=batchSize, callbacks=callbackList)
 
     # # Evaluation
     # # score = net.evaluate(data, lblBin, verbose=0)
@@ -416,7 +396,7 @@ if __name__ == "__main__":
 
     # save the losses figure
     plt.tight_layout()
-    plt.savefig('losses.png')
+    plt.savefig('resultTraining/losses.png')
     plt.close()
       
     # Accuracy Curves
@@ -430,7 +410,7 @@ if __name__ == "__main__":
 
     # save the accuracies figure
     plt.tight_layout()
-    plt.savefig('accs.png')
+    plt.savefig('resultTraining/accs.png')
     plt.close()
      
     # # # Save confusion matrix in file
