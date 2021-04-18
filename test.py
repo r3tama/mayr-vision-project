@@ -362,7 +362,7 @@ if __name__ == "__main__":
     tf.keras.backend.set_image_data_format("channels_last")
 
     # data, lbl, test_dict = loadCsvFile('img.csv')
-    train_data_src,train_labl_src, test_data_src,test_labl_src = loadCsvFile2('img.csv')
+    train_data_src,train_labl_src, test_data_src,test_labl_src = loadCsvFile2('img2.csv')
     data,lbl = getItems(train_data_src,train_labl_src)
     # Normalize data
     # data = np.array(data, dtype=np.float32)
@@ -393,7 +393,7 @@ if __name__ == "__main__":
     # print("lblBin type: {}, lbl shape: {}".format(type(lblBin), lblBin.shape))
 
     # Net params
-    numClasses = 24
+    numClasses = 3
     nEpochs = 150
     batchSize = 8
 
@@ -442,53 +442,6 @@ if __name__ == "__main__":
     plt.savefig('resultTraining/accs.png')
     plt.close()
 
-    try:
-        net2: UNetX = UNetX(img_size=(304,304,3),n_filters=[32,64,128,256,256,128,64,32], n_classes=numClasses)
-        # net: UNetX = UNetX(img_size=(720,480,3),n_filters=[32,64,128,256,256,128,64,32],n_classes=24)
-        net2.summary()
-
-        net2.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
-
-
-        # Create checkpoints to save different models
-        path3 = "resultTraining/noSparseweightsEpoch_{epoch:02d}_valLoss_{val_loss:.2f}.hdf5"
-        path4 = "resultTraining/noSparseBestModel.hdf5"
-        checkpoint3 = ModelCheckpoint(path3, monitor='val_loss', verbose=1, save_best_only=True)
-        checkpoint4 = ModelCheckpoint(path4, monitor='val_loss', verbose=1, save_best_only=True)
-        callbackList2 = [checkpoint3, checkpoint4]
-
-        history = net2.fit(data, lblBin, validation_split=0.3, epochs=nEpochs, steps_per_epoch=150, batch_size=batchSize, callbacks=callbackList2)
-
-        # Loss Curves
-        plt.figure(figsize=[8,6])
-        plt.plot(history.history['loss'],'r',linewidth=3.0)
-        plt.plot(history.history['val_loss'],'b',linewidth=3.0)
-        plt.legend(['Training loss', 'Validation Loss'],fontsize=18)
-        plt.xlabel('Epochs ',fontsize=16)
-        plt.ylabel('Loss',fontsize=16)
-        plt.title('Loss Curves',fontsize=16)
-
-        # save the losses figure
-        plt.tight_layout()
-        plt.savefig('resultTraining/noSparseLosses.png')
-        plt.close()
-
-        # Accuracy Curves
-        plt.figure(figsize=[8,6])
-        plt.plot(history.history['accuracy'],'r',linewidth=3.0)
-        plt.plot(history.history['val_accuracy'],'b',linewidth=3.0)
-        plt.legend(['Training Accuracy', 'Validation Accuracy'],fontsize=18)
-        plt.xlabel('Epochs ',fontsize=16)
-        plt.ylabel('Accuracy',fontsize=16)
-        plt.title('Accuracy Curves',fontsize=16)
-
-        # save the accuracies figure
-        plt.tight_layout()
-        plt.savefig('resultTraining/noSparseAccs.png')
-        plt.close()
-    except:
-        pass
-
     # Load test values
     dataTest, lblTest = loadFromDataSources(test_dict)
     # Normalize data and convert lbl from 3 to 1 dimension
@@ -513,19 +466,6 @@ if __name__ == "__main__":
     testConf=confusion_matrix(lblTestBin, lblPredict)
     print(testConf)
 
-    try:
-        dataPredict2 = net2.predict(dataTest)
-        lblPredict2 = []
-        for element in lblPredict2:
-            index, value = max(enumerate(element), key=operator.itemgetter(1))
-            lblPredict2.append(index)
-
-        print('\n\n----------------------------------------------------')
-        print('Confusion Matrix 2')
-        testConf2=confusion_matrix(lblTestBin, lblPredict2)
-        print(testConf2)
-    except:
-        pass
 
     # Evaluation
     try:
@@ -535,22 +475,9 @@ if __name__ == "__main__":
     except:
         pass
      
-    try:
-        score2 = net2.evaluate(dataTest, lblTest, verbose=0)
-        print("Test Error 2: %.2f%%" % (100-score2[1]*100))
-        print("%s: %.2f%%" % (net2.metrics_names[1], score2[1]*100))
-    except:
-        pass
     # Save confusion matrix in file
     with open('results.txt', '+a') as file:
         file.write('\n\n-------------------------------------------')
         file.write('Confusion Matrix fold ')
         file.write(testConf)
 
-    try:
-        with open('results2.txt', '+a') as file:
-            file.write('\n\n-------------------------------------------')
-            file.write('Confusion Matrix 2 ')
-            file.write(testConf2)
-    except:
-        pass
