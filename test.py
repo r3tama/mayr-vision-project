@@ -78,8 +78,8 @@ def loadCsvFile(filename: str) -> Tuple[List[Image], List[ImageSeg],List[DataSou
         raise TypeError("Name is not a string")
     with open(filename) as csvfile:
         data_storage = list(csv.DictReader(csvfile, delimiter=";"))
-        # train_dict, test_dict = train_test_split(data_storage,test_size=0.3,train_size=0.7,random_state=69)
-        train_dict, test_dict = train_test_split(data_storage,test_size=0.95,train_size=0.05,random_state=69)
+        train_dict, test_dict = train_test_split(data_storage,test_size=0.3,train_size=0.7,random_state=69)
+        # train_dict, test_dict = train_test_split(data_storage,test_size=0.95,train_size=0.05,random_state=69)
         data,lbl = loadFromDataSources(train_dict)
         return data,lbl,test_dict
 
@@ -310,9 +310,9 @@ if __name__ == "__main__":
         try:
             for gpu in gpus:
                 tf.config.experimental.set_memory_growth(gpu, True)
-                tf.config.experimental.set_virtual_device_configuration(
-                    gpu,
-                    [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=2048)])
+                # tf.config.experimental.set_virtual_device_configuration(
+                    # gpu,
+                    # [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=2048)])
         except RuntimeError:
             print("Invalid GPU configuration")
     # Set where the channels are specified
@@ -361,7 +361,7 @@ if __name__ == "__main__":
     # print("lblBin type: {}, lbl shape: {}".format(type(lblBin), lblBin.shape))
 
     numClasses = 24
-    nEpochs = 20
+    nEpochs = 150
 
 
 
