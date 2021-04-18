@@ -6,7 +6,7 @@ import numpy as np
 import csv
 import sys
 import matplotlib.pyplot as plt
-from numba import njit, vectorize
+from numba import njit, vectorize, prange
 from typing import List, Any, Tuple,Dict
 from nptyping import NDArray
 from sklearn.model_selection import train_test_split
@@ -54,10 +54,10 @@ def loadFromDataSources(d_list: List[DataSources]) -> Tuple[List[Image], List[Im
                 print(count)
             auxData = cv2.imread(row["data"])
             auxLbl = cv2.imread(row["label"])
-            auxData = cv2.resize(auxData, (224,224))
-            auxLbl = cv2.resize(auxLbl, (224,224))
-            # auxData = cv2.resize(auxData, (480,720))
-            # auxLbl = cv2.resize(auxLbl, (480,720))
+            # auxData = cv2.resize(auxData, (224,224))
+            # auxLbl = cv2.resize(auxLbl, (224,224))
+            auxData = cv2.resize(auxData, (480,720))
+            auxLbl = cv2.resize(auxLbl, (480,720))
             if auxData is not None:
                 data.append(auxData)
             if auxLbl is not None:
@@ -79,8 +79,8 @@ def loadCsvFile(filename: str) -> Tuple[List[Image], List[ImageSeg],List[DataSou
         raise TypeError("Name is not a string")
     with open(filename) as csvfile:
         data_storage = list(csv.DictReader(csvfile, delimiter=";"))
-        train_dict, test_dict = train_test_split(data_storage,test_size=0.3,train_size=0.7,random_state=69)
-        # train_dict, test_dict = train_test_split(data_storage,test_size=0.95,train_size=0.05,random_state=69)
+        # train_dict, test_dict = train_test_split(data_storage,test_size=0.3,train_size=0.7,random_state=69)
+        train_dict, test_dict = train_test_split(data_storage,test_size=0.95,train_size=0.05,random_state=69)
         data,lbl = loadFromDataSources(train_dict)
         return data,lbl,test_dict
 
@@ -207,7 +207,7 @@ def oneDim2rgbLabel(imgBin: ImageSegBinaryCollection) -> ImageSegCollection:
             print("Converted {} images to 3D".format(count))
     return img
 
-@njit
+@njit(parallel=True)
 def rgb2oneDimLabel(img: ImageSegCollection) -> ImageSegBinaryCollection:
     """
     Function to convert 3D ground truth images to 1D numeric values
@@ -242,12 +242,9 @@ def rgb2oneDimLabel(img: ImageSegCollection) -> ImageSegBinaryCollection:
 
     """
     imgBin = np.zeros((img.shape[0],img.shape[1],img.shape[2], 1), dtype=np.int16)
-    count = 0
-    for i in range(img.shape[0]):
-        count += 1
-        print(count)
-        for j in range(img.shape[1]):
-            for k in range(img.shape[2]):
+    for i in prange(img.shape[0]):
+        for j in prange(img.shape[1]):
+            for k in prange(img.shape[2]):
                 if np.array_equal(img[i, j, k, :], [0, 0, 0]):
                     imgBin[i,j] = 0
                 elif np.array_equal(img[i, j, k, :], [128, 64, 128]):
@@ -296,27 +293,28 @@ def rgb2oneDimLabel(img: ImageSegCollection) -> ImageSegBinaryCollection:
                     imgBin[i, j] = 22
                 elif np.array_equal(img[i, j, k, :], [0, 0, 255]):
                     imgBin[i, j] = 23
+    print("Images converted")
     return imgBin
 
 
 if __name__ == "__main__":
      
     tf.keras.backend.clear_session()
-    gpus = tf.config.list_physical_devices('GPU')
-    if gpus:
-        try:
-            for gpu in gpus:
-                tf.config.experimental.set_memory_growth(gpu, True)
+    # gpus = tf.config.list_physical_devices('GPU')
+    # if gpus:
+        # try:
+            # for gpu in gpus:
+                # tf.config.experimental.set_memory_growth(gpu, True)
                 # tf.config.experimental.set_virtual_device_configuration(
                     # gpu,
                     # [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=2048)])
-        except RuntimeError:
-            print("Invalid GPU configuration")
+        # except RuntimeError:
+            # print("Invalid GPU configuration")
     # Set where the channels are specified
-    # config = tf.compat.v1.ConfigProto()
-    # config.gpu_options.per_process_gpu_memory_fraction = 0.75
-    # config.gpu_options.allow_growth = True
-    # session = tf.compat.v1.InteractiveSession(config = config)
+    config = tf.compat.v1.ConfigProto()
+    config.gpu_options.per_process_gpu_memory_fraction = 0.75
+    config.gpu_options.allow_growth = True
+    session = tf.compat.v1.InteractiveSession(config = config)
 
     tf.keras.backend.set_image_data_format("channels_last")
      
@@ -374,7 +372,8 @@ if __name__ == "__main__":
     # callbackList = [checkpoint, checkpoint2]
      
     # history = net.fit(data, lblBin, epochs=nEpochs, batch_size=16, callbacks=callbackList)
-    net: UNetX = UNetX(img_size=(224,224,3),n_filters=[32,64,128,256,256,128,64,32],n_classes=24)
+    # net: UNetX = UNetX(img_size=(224,224,3),n_filters=[32,64,128,256,256,128,64,32],n_classes=24)
+    net: UNetX = UNetX(img_size=(720,480,3),n_filters=[32,64,128,256,256,128,64,32],n_classes=24)
     net.summary()
 
     net.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
