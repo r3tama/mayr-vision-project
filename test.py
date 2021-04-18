@@ -369,7 +369,7 @@ if __name__ == "__main__":
     # Net params
     numClasses = 3
     nEpochs = 150
-    batchSize = 8
+    batchSize = 32
 
     # net: UNetX = UNetX(img_size=(560,560,3),n_filters=[64,128,256,512,512,256,128,64], n_classes=numClasses)
     net: UNetX = UNetX(img_size=(224,224,3),n_filters=[32,64,128,256,256,128,64,32], n_classes=numClasses)
