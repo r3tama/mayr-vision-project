@@ -9,12 +9,12 @@ import matplotlib.pyplot as plt
 from typing import List, Any, Tuple,Dict
 from nptyping import NDArray
 from sklearn.model_selection import train_test_split
-# from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping
-# import tensorflow as tf
+from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping
+import tensorflow as tf
 from ctypes import *
 
 # User-defined modules
-# from models import *
+from models import *
 
 # Definition of types for typing
 DataSources = Dict[str,str]
@@ -53,8 +53,10 @@ def loadFromDataSources(d_list: List[DataSources]) -> Tuple[List[Image], List[Im
                 print(count)
             auxData = cv2.imread(row["data"])
             auxLbl = cv2.imread(row["label"])
-            auxData = cv2.resize(auxData, (480,720))
-            auxLbl = cv2.resize(auxLbl, (480,720))
+            auxData = cv2.resize(auxData, (224,224))
+            auxLbl = cv2.resize(auxLbl, (224,224))
+            # auxData = cv2.resize(auxData, (480,720))
+            # auxLbl = cv2.resize(auxLbl, (480,720))
             if auxData is not None:
                 data.append(auxData)
             if auxLbl is not None:
@@ -302,13 +304,24 @@ def rgb2oneDimLabel(img: ImageSegCollection) -> ImageSegBinaryCollection:
 
 if __name__ == "__main__":
      
+    tf.keras.backend.clear_session()
+    gpus = tf.config.list_physical_devices('GPU')
+    if gpus:
+        try:
+            for gpu in gpus:
+                tf.config.experimental.set_memory_growth(gpu, True)
+                tf.config.experimental.set_virtual_device_configuration(
+                    gpu,
+                    [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=2048)])
+        except RuntimeError:
+            print("Invalid GPU configuration")
     # Set where the channels are specified
     # config = tf.compat.v1.ConfigProto()
     # config.gpu_options.per_process_gpu_memory_fraction = 0.75
     # config.gpu_options.allow_growth = True
     # session = tf.compat.v1.InteractiveSession(config = config)
 
-    # tf.keras.backend.set_image_data_format("channels_last")
+    tf.keras.backend.set_image_data_format("channels_last")
      
     data, lbl, test_dict = loadCsvFile('img.csv')
     # Normalize data
@@ -316,33 +329,36 @@ if __name__ == "__main__":
     data = data / 255.0
     # Convert labels from 3 to 1 dimension
     lbl = np.array(lbl, dtype=np.int32)
-    # lblBin = rgb2oneDimLabel(lbl)
+    lblBin = rgb2oneDimLabel(lbl)
 
     # convertDimensions = CDLL("libconvertDimension.so")
     # lblBin = convertDimensions.rgb2oneDimLabel(lbl, lbl.shape[0], lbl.shape[1], lbl.shape[2])
     # print("lblBin type: {}, lbl shape: {}".format(type(lblBin), lblBin.shape))
     # lblBin = rgb2oneDimLabel(lbl)
 
-    print(lbl.shape)
+    # print(lbl.shape)
     # convertDimensions = cdll.LoadLibrary("libconvertDimension.so")
-    convertDimensions = np.ctypeslib.load_library("libconvertDimension.so",".")
-    print("type: {}".format(type(c_int32_p(lbl.ctypes.data))))
-    lblBin_c = convertDimensions.rgb2oneDimLabel(c_int_p(lbl.ctypes.data), lbl.shape[0], lbl.shape[1], lbl.shape[2])
-    print("uncasted")
-    print("lblBin_c type: {}".format(type(lblBin_c)))
-    print(lblBin_c)
-    ptr = np.ctypeslib.ndpointer(c_int32,1,(lbl.shape[0]*720*480))
-    print("ptr type: {}".format(type(ptr)))
-    lblBin_c = cast(lblBin_c,POINTER(c_int32))
-    print("lblBin_c2 type: {}".format(type(lblBin_c)))
-    print("casted")
-    print(lblBin_c)
-    # lblBin = np.ctypeslib.as_array(lblBin_c,shape=(lbl.shape[0]*720*480,))
-    lblBin = np.ctypeslib.as_array(ptr,shape=(lbl.shape[0]*720*480,))
-    print("lblBin type: {}".format(type(lblBin_c)))
-    lblBin.reshape((lbl.shape[0],720,480,1))
-    print(lblBin)
-    print("lblBin type: {}, lbl shape: {}".format(type(lblBin), lblBin.shape))
+    # convertDimensions = np.ctypeslib.load_library("libconvertDimension.so",".")
+    # print("type: {}".format(type(c_int32_p(lbl.ctypes.data))))
+    # lblBin_c = convertDimensions.rgb2oneDimLabel(c_int_p(lbl.ctypes.data), lbl.shape[0], lbl.shape[1], lbl.shape[2])
+    # print("uncasted")
+    # print("lblBin_c type: {}".format(type(lblBin_c)))
+    # print(lblBin_c)
+    # ptr = np.ctypeslib.ndpointer(c_int32,1,(lbl.shape[0]*720*480))
+    # print("ptr type: {}".format(type(ptr)))
+    # lblBin_c = cast(lblBin_c,POINTER(c_int32))
+    # print("lblBin_c2 type: {}".format(type(lblBin_c)))
+    # print("casted")
+    # print(lblBin_c)
+    # # lblBin = np.ctypeslib.as_array(lblBin_c,shape=(lbl.shape[0]*720*480,))
+    # lblBin = np.ctypeslib.as_array(ptr,shape=(lbl.shape[0]*720*480,))
+    # print("lblBin type: {}".format(type(lblBin_c)))
+    # lblBin.reshape((lbl.shape[0],720,480,1))
+    # print(lblBin)
+    # print("lblBin type: {}, lbl shape: {}".format(type(lblBin), lblBin.shape))
+    # convertDimensions = np.ctypeslib.load_library("libconvertDimension.so",".")
+    # lblBin = convertDimensions.rgb2oneDimLabel(c_void_p(lbl.ctypes.data), lbl.shape[0], lbl.shape[1], lbl.shape[2])
+    # print("lblBin type: {}, lbl shape: {}".format(type(lblBin), lblBin.shape))
 
     numClasses = 24
     nEpochs = 20
@@ -369,6 +385,20 @@ if __name__ == "__main__":
     # callbackList = [checkpoint, checkpoint2]
      
     # history = net.fit(data, lblBin, epochs=nEpochs, batch_size=16, callbacks=callbackList)
+    net: UNetX = UNetX(img_size=(224,224,3),n_filters=[32,64,128,256,256,128,64,32],n_classes=24)
+    net.summary()
+
+    net.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+
+    # Create checkpoints to save differente models
+    path = "weightsEpoch_{epoch:02d}_valLoss_{val_loss:.2f}.hdf5"
+    path2 = "bestModel.hdf5"
+    checkpoint = ModelCheckpoint(path, monitor='val_loss', verbose=1, save_best_only=True)
+    checkpoint2 = ModelCheckpoint(path2, monitor='val_loss', verbose=1, save_best_only=True)
+    callbackList = [checkpoint, checkpoint2]
+     
+    history = net.fit(data, lblBin, validation_split=0.2, epochs=nEpochs, batch_size=16, callbacks=callbackList)
 
     # # Evaluation
     # # score = net.evaluate(data, lblBin, verbose=0)
@@ -387,33 +417,33 @@ if __name__ == "__main__":
     # # testConf=confusion_matrix(y[test], ytestPredict)
     # # print(testConf)
 
-    # # Loss Curves
-    # plt.figure(figsize=[8,6])
-    # plt.plot(history.history['loss'],'r',linewidth=3.0)
-    # plt.plot(history.history['val_loss'],'b',linewidth=3.0)
-    # plt.legend(['Training loss', 'Validation Loss'],fontsize=18)
-    # plt.xlabel('Epochs ',fontsize=16)
-    # plt.ylabel('Loss',fontsize=16)
-    # plt.title('Loss Curves',fontsize=16)
+    # Loss Curves
+    plt.figure(figsize=[8,6])
+    plt.plot(history.history['loss'],'r',linewidth=3.0)
+    plt.plot(history.history['val_loss'],'b',linewidth=3.0)
+    plt.legend(['Training loss', 'Validation Loss'],fontsize=18)
+    plt.xlabel('Epochs ',fontsize=16)
+    plt.ylabel('Loss',fontsize=16)
+    plt.title('Loss Curves',fontsize=16)
 
-    # # save the losses figure
-    # plt.tight_layout()
-    # plt.savefig('losses.png')
-    # plt.close()
+    # save the losses figure
+    plt.tight_layout()
+    plt.savefig('losses.png')
+    plt.close()
       
-    # # Accuracy Curves
-    # plt.figure(figsize=[8,6])
-    # plt.plot(history.history['accuracy'],'r',linewidth=3.0)
-    # plt.plot(history.history['val_accuracy'],'b',linewidth=3.0)
-    # plt.legend(['Training Accuracy', 'Validation Accuracy'],fontsize=18)
-    # plt.xlabel('Epochs ',fontsize=16)
-    # plt.ylabel('Accuracy',fontsize=16)
-    # plt.title('Accuracy Curves',fontsize=16)
+    # Accuracy Curves
+    plt.figure(figsize=[8,6])
+    plt.plot(history.history['accuracy'],'r',linewidth=3.0)
+    plt.plot(history.history['val_accuracy'],'b',linewidth=3.0)
+    plt.legend(['Training Accuracy', 'Validation Accuracy'],fontsize=18)
+    plt.xlabel('Epochs ',fontsize=16)
+    plt.ylabel('Accuracy',fontsize=16)
+    plt.title('Accuracy Curves',fontsize=16)
 
-    # # save the accuracies figure
-    # plt.tight_layout()
-    # plt.savefig('accs.png')
-    # plt.close()
+    # save the accuracies figure
+    plt.tight_layout()
+    plt.savefig('accs.png')
+    plt.close()
      
     # # # Save confusion matrix in file
     # # with open('results.txt', '+a') as file:

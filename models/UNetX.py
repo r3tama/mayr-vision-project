@@ -121,15 +121,15 @@ class UNetX(_keras.Model):
 
         ## Block 7
         self._act14 = _keras.layers.Activation("relu") # (x)
-        self._conv20 = _keras.layers.Conv2DTranspose(n_filters[4],3,padding="same") # (x)
+        self._conv20 = _keras.layers.Conv2DTranspose(n_filters[7],3,padding="same") # (x)
         self._bn14 = _keras.layers.BatchNormalization() # (x)
         self._act15 = _keras.layers.Activation("relu") # (x)
-        self._conv21 = _keras.layers.Conv2DTranspose(n_filters[4],3,padding="same") # (x)
+        self._conv21 = _keras.layers.Conv2DTranspose(n_filters[7],3,padding="same") # (x)
         self._bn15 = _keras.layers.BatchNormalization() # (x)
         self._us7 = _keras.layers.UpSampling2D(2) # (x)
         # Residual 
         self._us8_r = _keras.layers.UpSampling2D(2) # (prev_block)
-        self._conv22_r = _keras.layers.Conv2D(n_filters[4],1,padding="same") # (residual)
+        self._conv22_r = _keras.layers.Conv2D(n_filters[7],1,padding="same") # (residual)
 
 
         ## Block 8
