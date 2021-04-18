@@ -55,10 +55,10 @@ def loadFromDataSources(d_list: List[DataSources]) -> Tuple[List[Image], List[Im
                 print(count)
             auxData = cv2.imread(row["data"])
             auxLbl = cv2.imread(row["label"])
-            auxData = cv2.resize(auxData, (600,600))
-            auxLbl = cv2.resize(auxLbl, (600,600))
-            # auxData = cv2.resize(auxData, (480,720))
-            # auxLbl = cv2.resize(auxLbl, (480,720))
+            auxData = cv2.resize(auxData, (304,304))
+            auxLbl = cv2.resize(auxLbl, (304,304))
+            # auxData = cv2.resize(auxData, (304,720))
+            # auxLbl = cv2.resize(auxLbl, (304,720))
             if auxData is not None:
                 data.append(auxData)
             if auxLbl is not None:
@@ -338,13 +338,13 @@ if __name__ == "__main__":
     # lblBin_c = convertDimensions.rgb2oneDimLabel(c_void_p(lbl.ctypes.data), lbl.shape[0], lbl.shape[1], lbl.shape[2])
     # print("uncasted")
     # print(lblBin_c)
-    # ptr = np.ctypeslib.ndpointer(c_int32,1,(lbl.shape[0]*720*480))
+    # ptr = np.ctypeslib.ndpointer(c_int32,1,(lbl.shape[0]*720*304))
     # lblBin_c = cast(lblBin_c,POINTER(c_int32))
     # print("casted")
     # print(lblBin_c)
-    # # lblBin = np.ctypeslib.as_array(lblBin_c,shape=(lbl.shape[0]*720*480,))
-    # lblBin = np.ctypeslib.as_array(ptr,shape=(lbl.shape[0]*720*480,))
-    # lblBin.reshape((lbl.shape[0],720,480,1))
+    # # lblBin = np.ctypeslib.as_array(lblBin_c,shape=(lbl.shape[0]*720*304,))
+    # lblBin = np.ctypeslib.as_array(ptr,shape=(lbl.shape[0]*720*304,))
+    # lblBin.reshape((lbl.shape[0],720,304,1))
     # print(lblBin)
     # print("lblBin type: {}, lbl shape: {}".format(type(lblBin), lblBin.shape))
 
@@ -353,7 +353,8 @@ if __name__ == "__main__":
     nEpochs = 150
     batchSize = 24
 
-    net: UNetX = UNetX(img_size=(600,600,3),n_filters=[32,64,128,256,256,128,64,32], n_classes=numClasses)
+    # net: UNetX = UNetX(img_size=(560,560,3),n_filters=[64,128,256,512,512,256,128,64], n_classes=numClasses)
+    net: UNetX = UNetX(img_size=(304,304,3),n_filters=[32,64,128,256,256,128,64,32], n_classes=numClasses)
     # net: UNetX = UNetX(img_size=(720,480,3),n_filters=[32,64,128,256,256,128,64,32],n_classes=24)
     net.summary()
 
