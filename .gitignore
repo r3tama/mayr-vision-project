@@ -3,3 +3,5 @@ semantic_drone_dataset/*
 *.o
 *.so
 resultTraining/*
+dogCatTraining/*
+
