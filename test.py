@@ -368,7 +368,7 @@ if __name__ == "__main__":
     checkpoint2 = ModelCheckpoint(path2, monitor='val_loss', verbose=1, save_best_only=True)
     callbackList = [checkpoint, checkpoint2]
 
-    history = net.fit(data, lblBin, validation_split=0.3, epochs=nEpochs, batch_size=batchSize, callbacks=callbackList)
+    history = net.fit(data, lblBin, validation_split=0.3, epochs=nEpochs, steps_per_epoch=150, batch_size=batchSize, callbacks=callbackList)
 
     # Loss Curves
     plt.figure(figsize=[8,6])
