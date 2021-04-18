@@ -54,8 +54,10 @@ def loadFromDataSources(d_list: List[DataSources]) -> Tuple[List[Image], List[Im
                 print(count)
             auxData = cv2.imread(row["data"])
             auxLbl = cv2.imread(row["label"])
-            auxData = cv2.resize(auxData, (480,720))
-            auxLbl = cv2.resize(auxLbl, (480,720))
+            auxData = cv2.resize(auxData, (224,224))
+            auxLbl = cv2.resize(auxLbl, (224,224))
+            # auxData = cv2.resize(auxData, (480,720))
+            # auxLbl = cv2.resize(auxLbl, (480,720))
             if auxData is not None:
                 data.append(auxData)
             if auxLbl is not None:
@@ -77,8 +79,8 @@ def loadCsvFile(filename: str) -> Tuple[List[Image], List[ImageSeg],List[DataSou
         raise TypeError("Name is not a string")
     with open(filename) as csvfile:
         data_storage = list(csv.DictReader(csvfile, delimiter=";"))
-        # train_dict, test_dict = train_test_split(data_storage,test_size=0.3,train_size=0.7,random_state=69)
-        train_dict, test_dict = train_test_split(data_storage,test_size=0.95,train_size=0.05,random_state=69)
+        train_dict, test_dict = train_test_split(data_storage,test_size=0.3,train_size=0.7,random_state=69)
+        # train_dict, test_dict = train_test_split(data_storage,test_size=0.95,train_size=0.05,random_state=69)
         data,lbl = loadFromDataSources(train_dict)
         return data,lbl,test_dict
 
@@ -299,11 +301,22 @@ def rgb2oneDimLabel(img: ImageSegCollection) -> ImageSegBinaryCollection:
 
 if __name__ == "__main__":
      
+    tf.keras.backend.clear_session()
+    gpus = tf.config.list_physical_devices('GPU')
+    if gpus:
+        try:
+            for gpu in gpus:
+                tf.config.experimental.set_memory_growth(gpu, True)
+                # tf.config.experimental.set_virtual_device_configuration(
+                    # gpu,
+                    # [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=2048)])
+        except RuntimeError:
+            print("Invalid GPU configuration")
     # Set where the channels are specified
-    config = tf.compat.v1.ConfigProto()
-    config.gpu_options.per_process_gpu_memory_fraction = 0.75
-    config.gpu_options.allow_growth = True
-    session = tf.compat.v1.InteractiveSession(config = config)
+    # config = tf.compat.v1.ConfigProto()
+    # config.gpu_options.per_process_gpu_memory_fraction = 0.75
+    # config.gpu_options.allow_growth = True
+    # session = tf.compat.v1.InteractiveSession(config = config)
 
     tf.keras.backend.set_image_data_format("channels_last")
      
@@ -320,7 +333,7 @@ if __name__ == "__main__":
     # print("lblBin type: {}, lbl shape: {}".format(type(lblBin), lblBin.shape))
     # lblBin = rgb2oneDimLabel(lbl)
 
-    print(lbl.shape)
+    # print(lbl.shape)
     # convertDimensions = cdll.LoadLibrary("libconvertDimension.so")
     # convertDimensions = np.ctypeslib.load_library("libconvertDimension.so",".")
     # lblBin_c = convertDimensions.rgb2oneDimLabel(c_void_p(lbl.ctypes.data), lbl.shape[0], lbl.shape[1], lbl.shape[2])
@@ -337,7 +350,7 @@ if __name__ == "__main__":
     # print("lblBin type: {}, lbl shape: {}".format(type(lblBin), lblBin.shape))
 
     numClasses = 24
-    nEpochs = 20
+    nEpochs = 150
 
 
 
@@ -347,37 +360,51 @@ if __name__ == "__main__":
     # plt.imshow(img.astype(np.uint8))
     # plt.show()
     # data, lbl,test_dict = loadCsvFile('img.csv')
-    net: UNetX = UNetX(img_size=(720,480,3),n_filters=[32,64,128,256,256,128,64,32],n_classes=24)
+    # net: UNetX = UNetX(img_size=(720,480,3),n_filters=[32,64,128,256,256,128,64,32],n_classes=24)
+    # net.summary()
+
+    # net.compile(loss="sparse_categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
+
+
+    # # Create checkpoints to save differente models
+    # path = "weightsEpoch_{epoch:02d}_valLoss_{val_loss:.2f}.hdf5"
+    # path2 = "bestModel.hdf5"
+    # checkpoint = ModelCheckpoint(path, monitor="val_loss", verbose=1, save_best_only=True)
+    # checkpoint2 = ModelCheckpoint(path2, monitor="val_loss", verbose=1, save_best_only=True)
+    # callbackList = [checkpoint, checkpoint2]
+     
+    # history = net.fit(data, lblBin, epochs=nEpochs, batch_size=16, callbacks=callbackList)
+    net: UNetX = UNetX(img_size=(224,224,3),n_filters=[32,64,128,256,256,128,64,32],n_classes=24)
     net.summary()
 
-    net.compile(loss="sparse_categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
+    net.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 
 
     # Create checkpoints to save differente models
     path = "weightsEpoch_{epoch:02d}_valLoss_{val_loss:.2f}.hdf5"
     path2 = "bestModel.hdf5"
-    checkpoint = ModelCheckpoint(path, monitor="val_loss", verbose=1, save_best_only=True)
-    checkpoint2 = ModelCheckpoint(path2, monitor="val_loss", verbose=1, save_best_only=True)
+    checkpoint = ModelCheckpoint(path, monitor='val_loss', verbose=1, save_best_only=True)
+    checkpoint2 = ModelCheckpoint(path2, monitor='val_loss', verbose=1, save_best_only=True)
     callbackList = [checkpoint, checkpoint2]
      
-    history = net.fit(data, lblBin, epochs=nEpochs, batch_size=16, callbacks=callbackList)
+    history = net.fit(data, lblBin, validation_split=0.2, epochs=nEpochs, batch_size=16, callbacks=callbackList)
 
-    # Evaluation
-    # score = net.evaluate(data, lblBin, verbose=0)
-    # print("Test Error: %.2f%%" % (100-score[1]*100))
-    # print("%s: %.2f%%" % (net.metrics_names[1], score[1]*100))
+    # # Evaluation
+    # # score = net.evaluate(data, lblBin, verbose=0)
+    # # print("Test Error: %.2f%%" % (100-score[1]*100))
+    # # print("%s: %.2f%%" % (net.metrics_names[1], score[1]*100))
 
-    # # generate predictions for test
-    # testPredict = net.predict(X[test])
-    # ytestPredict = []
-    # for element in testPredict:
-        # index, value = max(enumerate(element), key=operator.itemgetter(1))
-        # ytestPredict.append(index)
+    # # # generate predictions for test
+    # # testPredict = net.predict(X[test])
+    # # ytestPredict = []
+    # # for element in testPredict:
+        # # index, value = max(enumerate(element), key=operator.itemgetter(1))
+        # # ytestPredict.append(index)
 
-    # print('\n\n----------------------------------------------------')
-    # print('Confusion Matrix')
-    # testConf=confusion_matrix(y[test], ytestPredict)
-    # print(testConf)
+    # # print('\n\n----------------------------------------------------')
+    # # print('Confusion Matrix')
+    # # testConf=confusion_matrix(y[test], ytestPredict)
+    # # print(testConf)
 
     # Loss Curves
     plt.figure(figsize=[8,6])
@@ -407,8 +434,8 @@ if __name__ == "__main__":
     plt.savefig('accs.png')
     plt.close()
      
-    # # Save confusion matrix in file
-    # with open('results.txt', '+a') as file:
-        # file.write('\n\n-------------------------------------------')
-        # file.write('Confusion Matrix fold '+str(count))
-        # file.write(testConf)
+    # # # Save confusion matrix in file
+    # # with open('results.txt', '+a') as file:
+        # # file.write('\n\n-------------------------------------------')
+        # # file.write('Confusion Matrix fold '+str(count))
+        # # file.write(testConf)
