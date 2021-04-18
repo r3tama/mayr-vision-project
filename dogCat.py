@@ -62,9 +62,12 @@ def loadFromDataSources(d_list: List[DataSources]) -> Tuple[List[Image], List[Im
                 data.append(auxData)
             if auxLbl is not None:
                 auxLbl = cv2.resize(auxLbl, (224,224))
+                auxLbl -= 1
                 lbl.append(auxLbl)
         except ValueError:
             sys.stderr.write("Could not load an image")
+    if lbl is not None:
+            lbl = np.expand_dims(lbl,3)
     return data, lbl
 
 def loadCsvFile(filename: str) -> Tuple[List[Image], List[ImageSeg],List[DataSources]]:
