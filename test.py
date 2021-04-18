@@ -365,7 +365,7 @@ if __name__ == "__main__":
     checkpoint2 = ModelCheckpoint(path2, monitor='val_loss', verbose=1, save_best_only=True)
     callbackList = [checkpoint, checkpoint2]
      
-    history = net.fit(data, lblBin, epochs=nEpochs, batch_size=16, callbacks=callbackList)
+    history = net.fit(data, lblBin, validation_split=0.2, epochs=nEpochs, batch_size=16, callbacks=callbackList)
 
     # Evaluation
     # score = net.evaluate(data, lblBin, verbose=0)
