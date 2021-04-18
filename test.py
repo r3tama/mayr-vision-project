@@ -6,6 +6,7 @@ import numpy as np
 import csv
 import sys
 import matplotlib.pyplot as plt
+from numba import njit, vectorize
 from typing import List, Any, Tuple,Dict
 from nptyping import NDArray
 from sklearn.model_selection import train_test_split
@@ -204,6 +205,7 @@ def oneDim2rgbLabel(imgBin: ImageSegBinaryCollection) -> ImageSegCollection:
             print("Converted {} images to 3D".format(count))
     return img
 
+@njit
 def rgb2oneDimLabel(img: ImageSegCollection) -> ImageSegBinaryCollection:
     """
     Function to convert 3D ground truth images to 1D numeric values
@@ -237,13 +239,11 @@ def rgb2oneDimLabel(img: ImageSegCollection) -> ImageSegBinaryCollection:
         23 -> conflicting
 
     """
-    if len(img.shape) != 4:
-        raise TypeError("Array is not 4D")
-    if img.shape[3] != 3:
-        raise ValueError("Array must have format (numImg, width, height, 3)")
     imgBin = np.zeros((img.shape[0],img.shape[1],img.shape[2], 1), dtype=np.int16)
     count = 0
     for i in range(img.shape[0]):
+        count += 1
+        print(count)
         for j in range(img.shape[1]):
             for k in range(img.shape[2]):
                 if np.array_equal(img[i, j, k, :], [0, 0, 0]):
@@ -294,9 +294,6 @@ def rgb2oneDimLabel(img: ImageSegCollection) -> ImageSegBinaryCollection:
                     imgBin[i, j] = 22
                 elif np.array_equal(img[i, j, k, :], [0, 0, 255]):
                     imgBin[i, j] = 23
-        count += 1
-        if count % 15 == 0:
-            print("Converted {} images to 1D".format(count))
     return imgBin
 
 
@@ -325,19 +322,19 @@ if __name__ == "__main__":
 
     print(lbl.shape)
     # convertDimensions = cdll.LoadLibrary("libconvertDimension.so")
-    convertDimensions = np.ctypeslib.load_library("libconvertDimension.so",".")
-    lblBin_c = convertDimensions.rgb2oneDimLabel(c_void_p(lbl.ctypes.data), lbl.shape[0], lbl.shape[1], lbl.shape[2])
-    print("uncasted")
-    print(lblBin_c)
-    ptr = np.ctypeslib.ndpointer(c_int32,1,(lbl.shape[0]*720*480))
-    lblBin_c = cast(lblBin_c,POINTER(c_int32))
-    print("casted")
-    print(lblBin_c)
-    # lblBin = np.ctypeslib.as_array(lblBin_c,shape=(lbl.shape[0]*720*480,))
-    lblBin = np.ctypeslib.as_array(ptr,shape=(lbl.shape[0]*720*480,))
-    lblBin.reshape((lbl.shape[0],720,480,1))
-    print(lblBin)
-    print("lblBin type: {}, lbl shape: {}".format(type(lblBin), lblBin.shape))
+    # convertDimensions = np.ctypeslib.load_library("libconvertDimension.so",".")
+    # lblBin_c = convertDimensions.rgb2oneDimLabel(c_void_p(lbl.ctypes.data), lbl.shape[0], lbl.shape[1], lbl.shape[2])
+    # print("uncasted")
+    # print(lblBin_c)
+    # ptr = np.ctypeslib.ndpointer(c_int32,1,(lbl.shape[0]*720*480))
+    # lblBin_c = cast(lblBin_c,POINTER(c_int32))
+    # print("casted")
+    # print(lblBin_c)
+    # # lblBin = np.ctypeslib.as_array(lblBin_c,shape=(lbl.shape[0]*720*480,))
+    # lblBin = np.ctypeslib.as_array(ptr,shape=(lbl.shape[0]*720*480,))
+    # lblBin.reshape((lbl.shape[0],720,480,1))
+    # print(lblBin)
+    # print("lblBin type: {}, lbl shape: {}".format(type(lblBin), lblBin.shape))
 
     numClasses = 24
     nEpochs = 20
