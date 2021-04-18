@@ -54,14 +54,14 @@ def loadFromDataSources(d_list: List[DataSources]) -> Tuple[List[Image], List[Im
             if count % 15 == 0:
                 print(count)
             auxData = cv2.imread(row["data"])
-            auxLbl = cv2.imread(row["label"])
-            auxData = cv2.resize(auxData, (304,304))
-            auxLbl = cv2.resize(auxLbl, (304,304))
+            auxLbl = cv2.imread(row["label"],0)
             # auxData = cv2.resize(auxData, (304,720))
             # auxLbl = cv2.resize(auxLbl, (304,720))
             if auxData is not None:
+                auxData = cv2.resize(auxData, (224,224))
                 data.append(auxData)
             if auxLbl is not None:
+                auxLbl = cv2.resize(auxLbl, (224,224))
                 lbl.append(auxLbl)
         except ValueError:
             sys.stderr.write("Could not load an image")
@@ -319,13 +319,14 @@ if __name__ == "__main__":
     # Set where the channels are specified
     tf.keras.backend.set_image_data_format("channels_last")
 
-    data, lbl, test_dict = loadCsvFile('img.csv')
+    data, lbl, test_dict = loadCsvFile('img2.csv')
     # Normalize data
     data = np.array(data, dtype=np.float32)
     data = data / 255.0
     # Convert labels from 3 to 1 dimension
     lbl = np.array(lbl, dtype=np.int32)
-    lblBin = rgb2oneDimLabel(lbl)
+    # lblBin = rgb2oneDimLabel(lbl)
+    print("lbl type: {}, lbl size: {}".format(type(lbl), lbl.shape))
 
     # convertDimensions = CDLL("libconvertDimension.so")
     # lblBin = convertDimensions.rgb2oneDimLabel(lbl, lbl.shape[0], lbl.shape[1], lbl.shape[2])
@@ -349,12 +350,12 @@ if __name__ == "__main__":
     # print("lblBin type: {}, lbl shape: {}".format(type(lblBin), lblBin.shape))
 
     # Net params
-    numClasses = 24
-    nEpochs = 150
+    numClasses = 3
+    nEpochs = 30
     batchSize = 8
 
     # net: UNetX = UNetX(img_size=(560,560,3),n_filters=[64,128,256,512,512,256,128,64], n_classes=numClasses)
-    net: UNetX = UNetX(img_size=(304,304,3),n_filters=[32,64,128,256,256,128,64,32], n_classes=numClasses)
+    net: UNetX = UNetX(img_size=(224,224,3),n_filters=[32,64,128,256,256,128,64,32], n_classes=numClasses)
     # net: UNetX = UNetX(img_size=(720,480,3),n_filters=[32,64,128,256,256,128,64,32],n_classes=24)
     net.summary()
 
@@ -368,7 +369,7 @@ if __name__ == "__main__":
     checkpoint2 = ModelCheckpoint(path2, monitor='val_loss', verbose=1, save_best_only=True)
     callbackList = [checkpoint, checkpoint2]
 
-    history = net.fit(data, lblBin, validation_split=0.3, epochs=nEpochs, batch_size=batchSize, callbacks=callbackList)
+    history = net.fit(data, lbl, validation_split=0.3, epochs=nEpochs, batch_size=batchSize, callbacks=callbackList)
 
     # Loss Curves
     plt.figure(figsize=[8,6])
