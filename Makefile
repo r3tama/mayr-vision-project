@@ -12,3 +12,6 @@ run_docker:
 
 run_docker_shell:
 	docker run -it --rm -v "$$(pwd)":/work docker-nvidia-test /bin/bash
+
+build_docker:
+	docker build -t docker-nvidia-test .
